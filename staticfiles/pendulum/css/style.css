@@ -1,0 +1,56 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.simulation-container {
+    display: flex;
+    height: 80vh;
+    gap: 20px;
+}
+
+.map-control-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#earth-map {
+    flex: 1;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    min-height: 300px;
+}
+
+.control-panel {
+    padding: 15px;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+}
+
+.visualization-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.pendulum-3d-view {
+    flex: 1;
+    background: #f8f8f8;
+    border: 1px solid #ddd;
+    position: relative;
+}
+
+.chart-container {
+    flex: 1;
+    background: white;
+    border: 1px solid #ddd;
+}
+
+#trajectory-chart {
+    width: 100%;
+    height: 100%;
+}

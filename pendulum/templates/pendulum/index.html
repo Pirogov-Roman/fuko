@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Маятник Фуко</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/static/css/style.css"> <!-- Подключение вашего CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    {% csrf_token %}
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Карта</h2>
+            <div id="map"></div>
+            <div class="panel1">
+                <div class="params">
+                    <h3>Параметры</h3>
+                    <p>Широта: <span id="latitude">0</span>°</p>
+                    <p>Долгота: <span id="longitude">0</span>°</p>
+                    <p>Длина маятника: <input type="number" id="height" value="20" min="1" max="100"> м</p>
+                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="7">1/c</p>
+                    <p>Начальный угол: <input type="number" id="init_angle" value="30" min="5" max="85">°</p>
+                    <button id="start-btn">Запустить симуляцию</button>
+                </div>
+                <div class="info-panel">
+                    <p>Период колебаний: <span id="period-value">0</span> с</p>
+                    <p>Период обращения: <span id="rotation-value">0</span> ч</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <div class="pendulum-container">
+                <h3>Вид сверху</h3>
+                <div class="axes">
+                    <div class="x-axis"></div>
+                    <div class="y-axis"></div>
+                    <div class="x-label">X</div>
+                    <div class="y-label">Y</div>
+                </div>
+                <div class="bob"></div>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="pendulum-container">
+                <h3>Вид сбоку</h3>
+                <div class="ceiling"></div>
+                <div class="string">
+                    <div class="bob2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>График траектории плоскости маятника</h3>
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+    // Глобальные переменные
+    let animationId = null;
+    let currentChart = null;
+
+    // 1. Функция инициализации графика
+    function initChart(points) {
+        const ctx = document.getElementById('chart').getContext('2d');
+        
+        // Удаляем предыдущий график, если он существует
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        
+        // Создаем новый график
+        currentChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Траектория',
+                    data: points,
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    showLine: true
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: { duration: 0 },
+                scales: {
+                    x: { min: -5, max: 5 },
+                    y: { min: -5, max: 5 }
+                }
+            }
+        });
+    }
+
+    // 2. Функция анимации маятника
+    function startAnimation(points, duration = 60000) {
+        // Остановить предыдущую анимацию
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+        }
+        
+        const bobTop = document.querySelector('.bob');
+        const string = document.querySelector('.string');
+        const startTime = Date.now();
+        
+        function animate() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const idx = Math.min(Math.floor(progress * points.length), points.length - 1);
+            const point = points[idx];
+            
+            // Обновление маятника
+            bobTop.style.transform = `translate(${point.bob_x}px, ${point.bob_y}px)`;
+            string.style.transform = `rotate(${point.angle}deg)`;
+            
+            // Обновление графика (каждые 10 кадров)
+            if (idx % 10 === 0 && currentChart) {
+                currentChart.data.datasets[0].pointBackgroundColor = 
+                    points.map((_, i) => i === idx ? '#e74c3c' : 'rgba(0,0,0,0)');
+                currentChart.update('none');
+            }
+            
+            // Продолжаем анимацию, если не закончили
+            if (progress < 1) {
+                animationId = requestAnimationFrame(animate);
+            }
+        }
+        
+        // Запускаем анимацию
+        animate();
+    }
+
+    // 3. Функция для получения CSRF-токена
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 4. Обработчик кнопки "Запустить симуляцию"
+    document.getElementById('start-btn').addEventListener('click', async function() {
+        const height = parseFloat(document.getElementById('height').value);
+        if (isNaN(height) || height < 1 || height > 100) {
+            alert("Длина маятника должна быть от 1 до 100 метров");
+            return;
+        }
+
+        try {
+            const response = await fetch('/simulate/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    latitude: parseFloat(document.getElementById('latitude').textContent),
+                    height: height,
+                    damping_coef: parseFloat(document.getElementById('damping_coef').value),
+                    init_angle: parseFloat(document.getElementById('init_angle').value)
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Ошибка сервера");
+            }
+
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || "Неизвестная ошибка сервера");
+            }
+
+            // Обновляем информацию о периодах
+            document.getElementById('period-value').textContent = data.period.toFixed(2);
+            document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
+
+            // Инициализируем график
+            initChart(data.chart_points);
+            
+            // Рассчитываем продолжительность анимации
+            const baseDuration = 60000; // 60 секунд для периода 24 часа
+            const duration = baseDuration * (data.rotation_period / 24);
+            
+            // Запускаем анимацию
+            startAnimation(data.pendulum_points, duration);
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка: ' + error.message);
+        }
+    });
+
+    // 5. Инициализация карты (Leaflet)
+    const map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Обработчик клика по карте
+    map.on('click', function(e) {
+        document.getElementById('latitude').textContent = e.latlng.lat.toFixed(2);
+        document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
+    });
+</script>
+</body>
+</html>
