@@ -30,7 +30,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'WhatSees/assets')
 SECRET_KEY = "django-insecure-!o4ni_%wf1ahr)(8&b(6&ypywb4a!9q6mwamy$yqoahh3m1cf7"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     'fuko-hje5.onrender.com',
