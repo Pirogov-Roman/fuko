@@ -21,10 +21,11 @@ body {
     padding: 20px;
 }
 
-#map {
-    height: 400px;
-    margin-bottom: 15px;
-    border-radius: 4px;
+#map { 
+  height: 400px; 
+  width: 100%;
+  margin: 10px 0;
+  border: 1px solid #ccc;
 }
 
 .params {

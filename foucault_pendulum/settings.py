@@ -30,7 +30,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'WhatSees/assets')
 SECRET_KEY = "django-insecure-!o4ni_%wf1ahr)(8&b(6&ypywb4a!9q6mwamy$yqoahh3m1cf7"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'fuko-hje5.onrender.com',
@@ -138,8 +138,8 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles' 
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'pendulum/static'),
-]
+STATICFILES_DIRS = [BASE_DIR / 'pendulum/static']
+# settings.py
+CSRF_TRUSTED_ORIGINS = ['https://fuko-hje5.onrender.com']
