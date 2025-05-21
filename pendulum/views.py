@@ -28,7 +28,7 @@ def simulate(request):
             rotation_period = (2 * math.pi) / (abs(rotation_rate) * 3600)
 
             # Генерация точек траектории
-            total_points = 1000
+            total_points = 2000
             simulation_duration = rotation_period * 3600
             time_step = simulation_duration / total_points
 

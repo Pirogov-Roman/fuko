@@ -7,7 +7,7 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <!-- <link rel="stylesheet" href="/static/css/style.css">  -->
+    <link rel="icon" href="data:,"> <!-- Пустая иконка -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -23,9 +23,14 @@
                     <h3>Параметры</h3>
                     <p>Широта: <span id="latitude">0</span>°</p>
                     <p>Долгота: <span id="longitude">0</span>°</p>
-                    <p>Длина маятника: <input type="number" id="height" value="20" min="1" max="100"> м</p>
-                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="7">1/c</p>
-                    <p>Начальный угол: <input type="number" id="init_angle" value="30" min="5" max="85">°</p>
+                    <p>Длина маятника: <input type="number" id="height" value="60" min="1" max="100"> м</p>
+                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="10">1/c</p>
+                    <p>Начальный угол: <input type="number" id="init_angle" value="30" min="5" max="90">°</p>
+                    
+                    <p>Скорость анимации: 
+                        <input type="range" id="speed" min="0.1" max="2" step="0.1" value="1">
+                        <span id="speed-value">1</span>x
+                    </p>
                     <button id="start-btn">Запустить симуляцию</button>
                 </div>
                 <div class="info-panel">
@@ -69,9 +74,14 @@
 
     <script>
     // Глобальные переменные
+    let animationSpeed = 1;
     let animationId = null;
     let currentChart = null;
-
+    
+    document.getElementById('speed').addEventListener('input', function() {
+        animationSpeed = parseFloat(this.value);
+        document.getElementById('speed-value').textContent = this.value;
+    });
     // 1. Функция инициализации графика
     function initChart(points) {
         const ctx = document.getElementById('chart').getContext('2d');
@@ -105,44 +115,68 @@
             }
         });
     }
-
-    // 2. Функция анимации маятника
-    function startAnimation(points, duration = 60000) {
-        // Остановить предыдущую анимацию
-        if (animationId) {
-            cancelAnimationFrame(animationId);
-        }
-        
-        const bobTop = document.querySelector('.bob');
-        const string = document.querySelector('.string');
-        const startTime = Date.now();
-        
-        function animate() {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const idx = Math.min(Math.floor(progress * points.length), points.length - 1);
-            const point = points[idx];
-            
-            // Обновление маятника
-            bobTop.style.transform = `translate(${point.bob_x}px, ${point.bob_y}px)`;
-            string.style.transform = `rotate(${point.angle}deg)`;
-            
-            // Обновление графика (каждые 10 кадров)
-            if (idx % 10 === 0 && currentChart) {
-                currentChart.data.datasets[0].pointBackgroundColor = 
-                    points.map((_, i) => i === idx ? '#e74c3c' : 'rgba(0,0,0,0)');
-                currentChart.update('none');
-            }
-            
-            // Продолжаем анимацию, если не закончили
-            if (progress < 1) {
-                animationId = requestAnimationFrame(animate);
-            }
-        }
-        
-        // Запускаем анимацию
-        animate();
+   
+    // 2. Функция анимации маятника (рабочая версия)
+// 2. Функция анимации маятника (исправленная версия)
+function startAnimation(points, duration = 60000) {
+    // Остановка предыдущей анимации
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
     }
+
+    // Проверка элементов DOM и данных
+    const bobTop = document.querySelector('.bob');
+    const string = document.querySelector('.string');
+    if (!bobTop || !string) {
+        console.error('Элементы маятника не найдены');
+        return;
+    }
+
+    if (!Array.isArray(points) || points.length === 0) {
+        console.error('Нет данных для анимации');
+        return;
+    }
+
+    const startTime = performance.now();
+    const totalPoints = points.length;
+    const timePerPoint = duration / totalPoints;
+
+    function animate(currentTime) {
+        const elapsed = (currentTime - startTime) * animationSpeed;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Безопасный расчет индекса (исключаем -1)
+        const currentIndex = Math.min(
+            Math.max(0, Math.floor(progress * (totalPoints - 1))),  // Гарантируем индекс ≥ 0
+            totalPoints - 1
+        );
+
+        const point = points[currentIndex];
+        if (!point) {
+            console.error('Точка не найдена:', currentIndex);
+            return;
+        }
+
+        // Обновление позиции маятника
+        bobTop.style.transform = `translate(${point.bob_x}px, ${point.bob_y}px)`;
+        string.style.transform = `rotate(${point.angle}deg)`;
+
+        // Обновление графика (реже для производительности)
+        if (currentChart && currentIndex % 10 === 0) {
+            currentChart.data.datasets[0].pointBackgroundColor = 
+                points.map((_, i) => i === currentIndex ? '#e74c3c' : 'rgba(0,0,0,0)');
+            currentChart.update('none');
+        }
+
+        if (progress < 1) {
+            animationId = requestAnimationFrame(animate);
+        }
+    }
+
+    // Запуск анимации
+    animationId = requestAnimationFrame(animate);
+}
 
     // 3. Функция для получения CSRF-токена
     function getCookie(name) {
@@ -202,7 +236,7 @@
             initChart(data.chart_points);
             
             // Рассчитываем продолжительность анимации
-            const baseDuration = 60000; // 60 секунд для периода 24 часа
+            const baseDuration = 30000; // 60 секунд для периода 24 часа
             const duration = baseDuration * (data.rotation_period / 24);
             
             // Запускаем анимацию

@@ -22,7 +22,7 @@ body {
 }
 
 #map { 
-  height: 400px; 
+  height: 600px; 
   width: 100%;
   margin: 10px 0;
   border: 1px solid #ccc;
@@ -176,6 +176,25 @@ body {
     transform: translateX(-50%);
     color: rgba(0, 0, 0, 0.5);
     font-weight: bold;
+}
+
+/* Добавить в конец файла */
+#speed {
+    width: 150px;
+    vertical-align: middle;
+    margin: 0 10px;
+}
+
+#speed-value {
+    display: inline-block;
+    width: 30px;
+    text-align: center;
+}
+
+.bob, .bob2, .string {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform-style: preserve-3d;
 }
 
 .leaflet-container .leaflet-control-attribution {
