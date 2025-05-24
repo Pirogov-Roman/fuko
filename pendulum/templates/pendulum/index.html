@@ -1,8 +1,7 @@
+{% load static %}
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Маятник Фуко</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -10,10 +9,9 @@
     <link rel="icon" href="data:,"> <!-- Пустая иконка -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
 </head>
 <body>
-    {% csrf_token %}
-    
     <div class="container">
         <div class="panel">
             <h2>Карта</h2>
@@ -23,31 +21,28 @@
                     <h3>Параметры</h3>
                     <p>Широта: <span id="latitude">0</span>°</p>
                     <p>Долгота: <span id="longitude">0</span>°</p>
-                    <p>Длина маятника: <input type="number" id="height" value="60" min="1" max="100"> м</p>
-                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="10">1/c</p>
-                    <p>Начальный угол: <input type="number" id="init_angle" value="30" min="5" max="90">°</p>
-                    
-                    <p>Скорость анимации: 
-                        <input type="range" id="speed" min="0.3" max="2" step="0.1" value="1">
-                        <span id="speed-value">1</span>x
-                    </p>
-                    <button id="start-btn">Запустить симуляцию</button>
+                    <p>Длина маятника: <input type="number" id="height" value="70" min="10" max="200"> м</p>
+                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="7">1/c</p>
+                    <p>Начальный угол: <input type="number" id="init_angle" value="15" min="5" max="30">°</p>
+                    <p>Время симуляции: <input type="number" id="stoptime" value="300" min="30" max="3600"> c</p>
+                    <p>Ускорение времени: <input type="range" id="speed-slider" min="1" max="100" value="24"</p> <span id="speed-display">25x</span>
                 </div>
                 <div class="info-panel">
-                    <p>Период колебаний: <span id="period-value">0</span> с</p>
-                    <p>Период обращения: <span id="rotation-value">0</span> ч</p>
+                    <p>Период колебаний маятника: <span id="period-value">0</span></p>
+                    <p>Период обращения плоскости: <span id="rotation-value">0</span> часов</p>
+                    <button id="start-btn">Запустить симуляцию</button>
                 </div>
             </div>
         </div>
     </div>
-    
     <div class="container">
         <div class="panel">
             <div class="pendulum-container">
-                <h3>Вид сверху</h3>
+                <div><h3>Вид сверху</h3></div>
                 <div class="axes">
                     <div class="x-axis"></div>
                     <div class="y-axis"></div>
+                    <div class="origin">O</div>
                     <div class="x-label">X</div>
                     <div class="y-label">Y</div>
                 </div>
@@ -56,7 +51,7 @@
         </div>
         <div class="panel">
             <div class="pendulum-container">
-                <h3>Вид сбоку</h3>
+                <div><h3>Вид сбоку</h3></div>
                 <div class="ceiling"></div>
                 <div class="string">
                     <div class="bob2"></div>
@@ -64,199 +59,304 @@
             </div>
         </div>
     </div>
-    
+    <div class="container">
+        <div class="panel">
+            <h3>График траектории плоскости маятника в реальном времени</h3>
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
     <div class="container">
         <div class="panel">
             <h3>График траектории плоскости маятника</h3>
-            <canvas id="chart"></canvas>
+            <canvas id="chart2"></canvas>
+        </div>
+    </div>
+    <div class="container">
+        <div class="panel">
+            <h3>Зависимость периода обращения плоскости маятника от широты</h3>
+            <canvas id="latitude-period-chart"></canvas>
         </div>
     </div>
 
     <script>
-    // Глобальные переменные
-    let animationSpeed = 1;
-    let animationId = null;
-    let currentChart = null;
-    
-    document.getElementById('speed').addEventListener('input', function() {
-        animationSpeed = parseFloat(this.value);
-        document.getElementById('speed-value').textContent = this.value;
-    });
-    // 1. Функция инициализации графика
-    function initChart(points) {
-        const ctx = document.getElementById('chart').getContext('2d');
+
+        const slider = document.getElementById('speed-slider');
+        const display = document.getElementById('speed-display');
         
-        // Удаляем предыдущий график, если он существует
-        if (currentChart) {
-            currentChart.destroy();
-        }
+        // Обновляем значение при перемещении ползунка
+        slider.addEventListener('input', function() {
+            display.textContent = this.value;
+        });
         
-        // Создаем новый график
-        currentChart = new Chart(ctx, {
-            type: 'scatter',
-            data: {
-                datasets: [{
+        // Инициализируем начальное значение
+        display.textContent = slider.value;
+        
+        // Инициализация карты
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Обработчик клика по карте
+        map.on('click', function(e) {
+            document.getElementById('latitude').textContent = e.latlng.lat.toFixed(2);
+            document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
+        });
+
+        // Глобальные переменные
+        let animationId = null;
+        let currentChart = null;
+        let currentChart2 = null;
+
+        // Обработчик кнопки запуска
+        document.getElementById('start-btn').addEventListener('click', function() {           
+            startSimulation();
+        });
+
+        function startSimulation() {
+            // Получаем параметры
+            const latitude = parseFloat(document.getElementById('latitude').textContent);
+            const height = parseFloat(document.getElementById('height').value);
+            const dampingCoef = parseFloat(document.getElementById('damping_coef').value) * 1e-5;
+            const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
+            const stopTime = parseFloat(document.getElementById('stoptime').value);
+
+            // Очистка предыдущей анимации
+            if (animationId) cancelAnimationFrame(animationId);
+            if (currentChart) currentChart.destroy();
+            if (currentChart2) currentChart2.destroy();
+
+            // Физические константы
+            const g = 9.81;
+            const earthRot = 7.2921159e-5;
+            const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
+            const period = 2 * Math.PI * Math.sqrt(height / g);
+            const oscillRate = (2 * Math.PI)/period;
+            const rotationPeriod = rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
+            const simulationDuration = rotationPeriod*3600;
+
+            // Обновляем информацию о периоде
+            document.getElementById('period-value').textContent = period.toFixed(2);
+            document.getElementById('rotation-value').textContent = rotationPeriod.toFixed(2);
+
+            // Параметры анимации
+            const pendulumLength = 200;
+            const scaleFactor = 15;
+            const realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
+            
+            // Инициализация графика
+            const ctx = document.getElementById('chart').getContext('2d');
+            currentChart = new Chart(ctx, {
+                type: 'scatter',
+                data: { datasets: [{
                     label: 'Траектория',
-                    data: points,
+                    data: [],
                     borderColor: '#3498db',
-                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
                     pointRadius: 0,
                     borderWidth: 1,
                     showLine: true
-                }]
+                }]},
+                options: {
+                    responsive: true,
+                    animation: { duration: 0 },
+                    scales: {
+                        x: { min: -5, max: 5 },
+                        y: { min: -5, max: 5 }
+                    }
+                }
+            });
+
+            const chartPoints = [];
+            const totalPoints = 1000;
+            const timeStep = simulationDuration / totalPoints;
+    
+            for (let i = 0; i < totalPoints; i++) {
+                const t = i * timeStep;
+                
+                // Физические расчеты
+                const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate^2-dampingCoef^2)*t);
+                const rotationAngle = rotationRate * t;
+                
+                // Точки для графика
+                const x = scaleFactor * Math.sin(angle) * Math.cos(rotationAngle);
+                const y = scaleFactor * Math.sin(angle) * Math.sin(rotationAngle);
+                chartPoints.push({x, y});
+            }
+
+            const ctx2 = document.getElementById('chart2').getContext('2d');
+            currentChart2 = new Chart(ctx2, {
+                type: 'scatter',
+                data: { datasets: [{
+                    label: 'Траектория',
+                    data: chartPoints,
+                    borderColor: '#3498db',
+                    pointRadius: 0,
+                    borderWidth: 1,
+                    showLine: true
+                }]},
+                options: {
+                    responsive: true,
+                    animation: { duration: 0 },
+                    scales: {
+                        x: { min: -5, max: 5 },
+                        y: { min: -5, max: 5 }
+                    }
+                }
+            });
+
+            // Элементы DOM
+            const string = document.querySelector('.string');
+            const bobTop = document.querySelector('.bob');
+            const startTime = Date.now();
+            let lastChartUpdate = 0;
+
+            // Функция анимации
+            function animate() {
+                const elapsed = (Date.now() - startTime) / 1000; // в секундах
+                const simulatedTime = elapsed * realTimeRatio;
+                
+                // Расчет текущего состояния
+                const angle = initAngle * Math.exp(-dampingCoef * simulatedTime) * 
+                            Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * simulatedTime);
+                const rotationAngle = rotationRate * simulatedTime;
+                
+                // Позиция маятника
+                const bobX = pendulumLength * Math.sin(angle) * Math.cos(rotationAngle);
+                const bobY = pendulumLength * Math.sin(angle) * Math.sin(rotationAngle);
+                
+                // Применяем анимацию БЕЗ CSS transition (чтобы избежать дёрганий)
+                string.style.transform = `rotate(${angle * 180/Math.PI}deg)`;
+                bobTop.style.transform = `translate(${bobX}px, ${bobY}px)`;
+                
+                // Обновление графика (только каждые 50мс)
+                if (elapsed * 1000 - lastChartUpdate > 10) {
+                    currentChart.data.datasets[0].data.push({
+                        x: scaleFactor * Math.sin(angle) * Math.cos(rotationAngle),
+                        y: scaleFactor * Math.sin(angle) * Math.sin(rotationAngle)
+                    });
+                    
+                    if (currentChart.data.datasets[0].data.length > 500) {
+                        currentChart.data.datasets[0].data.shift();
+                    }
+                    
+                    currentChart.update('none');
+                    lastChartUpdate = elapsed * 1000;
+                }
+                
+                // Продолжаем анимацию, если прошло меньше 60 секунд
+                if (elapsed < stopTime) {
+                    animationId = requestAnimationFrame(animate);
+                }
+            }
+            
+            // Начальные стили для плавности
+            string.style.transition = 'none';
+            bobTop.style.transition = 'none';
+            bobTop.style.willChange = 'transform';
+            
+            animate();
+        }
+
+        // График зависимости периода от широты
+        function calculateRotationPeriod(latitude) {
+            const earthRot = 7.2921159e-5;
+            const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
+            return rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
+        }
+
+        const latitudes = [];
+        const periods = [];
+        for (let lat = -90; lat <= 90; lat += 5) {
+            latitudes.push(lat);
+            periods.push(calculateRotationPeriod(lat));
+        }
+
+        const specialPoints = [
+            { name: "Северный полюс", lat: 90, period: calculateRotationPeriod(90) },
+            { name: "Южный полюс", lat: -90, period: calculateRotationPeriod(-90) },
+            { name: "Мурманск", lat: 68.97, period: calculateRotationPeriod(68.97) },
+            { name: "Гринвич (Лондон)", lat: 51.4779, period: calculateRotationPeriod(51.4779) },
+            { name: "Исаакиевский собор (СПб)", lat: 59.9341, period: calculateRotationPeriod(59.9341) },
+            { name: "Нью-Йорк", lat: 40.7128, period: calculateRotationPeriod(40.7128) },
+            { name: "Пекин", lat: 39.9042, period: calculateRotationPeriod(39.9042) },
+            { name: "Экватор", lat: 0, period: calculateRotationPeriod(0) },
+            { name: "Париж", lat: 48.8566, period: calculateRotationPeriod(48.8566) },
+            { name: "Сидней", lat: -33.8688, period: calculateRotationPeriod(-33.8688) }
+        ];
+
+        const ctx3 = document.getElementById('latitude-period-chart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: latitudes,
+                datasets: [
+                    {
+                        label: 'Период обращения (часы)',
+                        data: periods,
+                        borderColor: '#e74c3c',
+                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Известные места',
+                        data: specialPoints.map(point => {
+                            const closestLatIndex = latitudes.reduce((prev, curr, idx) => 
+                                Math.abs(curr - point.lat) < Math.abs(latitudes[prev] - point.lat) ? idx : prev, 0);
+                            return {
+                                x: latitudes[closestLatIndex],
+                                y: periods[closestLatIndex]
+                            };
+                        }),
+                        pointBackgroundColor: specialPoints.map((_, i) => 
+                            i === 0 ? '#2c3e50' :
+                            i === 1 ? '#2c3e50' : 
+                            i === 7 ? '#27ae60' :
+                            '#3498db'
+                        ),
+                        pointRadius: specialPoints.map((_, i) => 5),
+                        pointHoverRadius: 8,
+                        showLine: false,
+                        pointStyle: 'circle'
+                    }
+                ]
             },
             options: {
                 responsive: true,
-                animation: { duration: 0 },
                 scales: {
-                    x: { min: -5, max: 5 },
-                    y: { min: -5, max: 5 }
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Широта (градусы)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Период обращения (часы)'
+                        },
+                        min: 0
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.datasetIndex === 0) {
+                                    return `Период: ${context.raw.toFixed(2)} часов`;
+                                } else {
+                                    const point = specialPoints[context.dataIndex];
+                                    return [
+                                        point.name,
+                                        `Широта: ${point.lat}° (точное значение)`,
+                                        `Период: ${point.period.toFixed(2)} часов`
+                                    ];
+                                }
+                            }
+                        }
+                    }
                 }
             }
         });
-    }
-   
-    // 2. Функция анимации маятника (рабочая версия)
-// 2. Функция анимации маятника (исправленная версия)
-function startAnimation(points, duration = 60000) {
-    // Остановка предыдущей анимации
-    if (animationId) {
-        cancelAnimationFrame(animationId);
-        animationId = null;
-    }
-
-    // Проверка элементов DOM и данных
-    const bobTop = document.querySelector('.bob');
-    const string = document.querySelector('.string');
-    if (!bobTop || !string) {
-        console.error('Элементы маятника не найдены');
-        return;
-    }
-
-    if (!Array.isArray(points) || points.length === 0) {
-        console.error('Нет данных для анимации');
-        return;
-    }
-
-    const startTime = performance.now();
-    const totalPoints = points.length;
-    const timePerPoint = duration / totalPoints;
-
-    function animate(currentTime) {
-        const elapsed = (currentTime - startTime) * animationSpeed;
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Безопасный расчет индекса (исключаем -1)
-        const currentIndex = Math.min(
-            Math.max(0, Math.floor(progress * (totalPoints - 1))),  // Гарантируем индекс ≥ 0
-            totalPoints - 1
-        );
-
-        const point = points[currentIndex];
-        if (!point) {
-            console.error('Точка не найдена:', currentIndex);
-            return;
-        }
-
-        // Обновление позиции маятника
-        bobTop.style.transform = `translate(${point.bob_x}px, ${point.bob_y}px)`;
-        string.style.transform = `rotate(${point.angle}deg)`;
-
-        // Обновление графика (реже для производительности)
-        if (currentChart && currentIndex % 10 === 0) {
-            currentChart.data.datasets[0].pointBackgroundColor = 
-                points.map((_, i) => i === currentIndex ? '#e74c3c' : 'rgba(0,0,0,0)');
-            currentChart.update('none');
-        }
-
-        if (progress < 1) {
-            animationId = requestAnimationFrame(animate);
-        }
-    }
-
-    // Запуск анимации
-    animationId = requestAnimationFrame(animate);
-}
-
-    // 3. Функция для получения CSRF-токена
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
-    }
-
-    // 4. Обработчик кнопки "Запустить симуляцию"
-    document.getElementById('start-btn').addEventListener('click', async function() {
-        const height = parseFloat(document.getElementById('height').value);
-        if (isNaN(height) || height < 1 || height > 100) {
-            alert("Длина маятника должна быть от 1 до 100 метров");
-            return;
-        }
-
-        try {
-            const response = await fetch('/simulate/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    latitude: parseFloat(document.getElementById('latitude').textContent),
-                    height: height,
-                    damping_coef: parseFloat(document.getElementById('damping_coef').value),
-                    init_angle: parseFloat(document.getElementById('init_angle').value)
-                })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Ошибка сервера");
-            }
-
-            const data = await response.json();
-            
-            if (!data.success) {
-                throw new Error(data.error || "Неизвестная ошибка сервера");
-            }
-
-            // Обновляем информацию о периодах
-            document.getElementById('period-value').textContent = data.period.toFixed(2);
-            document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
-
-            // Инициализируем график
-            initChart(data.chart_points);
-            
-            // Рассчитываем продолжительность анимации
-            const baseDuration = 30000; // 60 секунд для периода 24 часа
-            const duration = baseDuration * (data.rotation_period / 24);
-            
-            // Запускаем анимацию
-            startAnimation(data.pendulum_points, duration);
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Ошибка: ' + error.message);
-        }
-    });
-
-    // 5. Инициализация карты (Leaflet)
-    const map = L.map('map').setView([0, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // Обработчик клика по карте
-    map.on('click', function(e) {
-        document.getElementById('latitude').textContent = e.latlng.lat.toFixed(2);
-        document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
-    });
-</script>
+    </script>
 </body>
 </html>
