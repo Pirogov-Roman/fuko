@@ -22,14 +22,14 @@
                     <p>Широта: <span id="latitude">0</span>°</p>
                     <p>Долгота: <span id="longitude">0</span>°</p>
                     <p>Длина маятника: <input type="number" id="height" value="70" min="10" max="200"> м</p>
-                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="1" min="0" max="7">1/c</p>
+                    <p>Коэффициент затухания: <input type="number" id="damping_coef" value="0.1" min="0" max="1" step="0.01">1/c</p>
                     <p>Начальный угол: <input type="number" id="init_angle" value="15" min="5" max="30">°</p>
                     <p>Время симуляции: <input type="number" id="stoptime" value="300" min="30" max="3600"> c</p>
                     <p>Ускорение времени: <input type="range" id="speed-slider" min="1" max="100" value="24"><span id="speed-display">25x</span> </p>
                 </div>
                 <div class="info-panel">
-                    <p>Период колебаний маятника: <span id="period-value">0</span></p>
-                    <p>Период обращения плоскости: <span id="rotation-value">0</span> часов</p>
+                    <p>Период колебаний маятника: <span id="period-value">0</span>c</p>
+                    <p>Период обращения плоскости: <span id="rotation-value">0</span> ч</p>
                     <button id="start-btn">Запустить симуляцию</button>
                 </div>
             </div>
@@ -139,7 +139,7 @@
 
             // Параметры анимации
             const pendulumLength = 200;
-            const scaleFactor = 15;
+            const scaleFactor = 1;
             const realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
             
             // Инициализация графика
@@ -154,14 +154,7 @@
                     borderWidth: 1,
                     showLine: true
                 }]},
-                options: {
-                    responsive: true,
-                    animation: { duration: 0 },
-                    scales: {
-                        x: { min: -5, max: 5 },
-                        y: { min: -5, max: 5 }
-                    }
-                }
+                
             });
 
             const chartPoints = [];
@@ -172,7 +165,7 @@
                 const t = i * timeStep;
                 
                 // Физические расчеты
-                const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate^2-dampingCoef^2)*t);
+                const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
                 const rotationAngle = rotationRate * t;
                 
                 // Точки для графика
@@ -193,13 +186,33 @@
                     showLine: true
                 }]},
                 options: {
-                    responsive: true,
-                    animation: { duration: 0 },
-                    scales: {
-                        x: { min: -5, max: 5 },
-                        y: { min: -5, max: 5 }
-                    }
-                }
+    responsive: true,
+    animation: { duration: 0 },
+    scales: {
+        x: { 
+            min: -scaleFactor*1.1, 
+            max: scaleFactor*1.1,
+            title: {
+                display: true,
+                text: 'X координата (усл. ед.)'
+            }
+        },
+        y: { 
+            min: -scaleFactor*1.1, 
+            max: scaleFactor*1.1,
+            title: {
+                display: true,
+                text: 'Y координата (усл. ед.)'
+            }
+        }
+    },
+    plugins: {
+        legend: {
+            display: true,
+            position: 'top'
+        }
+    }
+}
             });
 
             // Элементы DOM
