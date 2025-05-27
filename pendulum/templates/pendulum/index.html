@@ -9,6 +9,7 @@
     <link rel="icon" href="data:,"> <!-- Пустая иконка -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     
 </head>
 <body>
@@ -143,18 +144,73 @@
             const realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
             
             // Инициализация графика
+            // Инициализация графика в реальном времени
             const ctx = document.getElementById('chart').getContext('2d');
             currentChart = new Chart(ctx, {
                 type: 'scatter',
-                data: { datasets: [{
-                    label: 'Траектория',
-                    data: [],
-                    borderColor: '#3498db',
-                    pointRadius: 0,
-                    borderWidth: 1,
-                    showLine: true
-                }]},
-                
+                data: { 
+                    datasets: [{
+                        label: 'Траектория маятника',
+                        data: [],
+                        borderColor: '#3498db',
+                        pointRadius: 0,
+                        borderWidth: 1,
+                        showLine: true,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: {
+                        duration: 0 // отключаем анимацию для производительности
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'X координата (усл. ед.)'
+                            },
+                            min: -1.1,
+                            max: 1.1
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Y координата (усл. ед.)'
+                            },
+                            min: -1.1,
+                            max: 1.1
+                        }
+                    },
+                    plugins: {
+                        zoom: {
+                            zoom: {
+                                wheel: {
+                                    enabled: true
+                                },
+                                pinch: {
+                                    enabled: true
+                                },
+                                mode: 'xy'
+                            },
+                            pan: {
+                                enabled: true,
+                                mode: 'xy'
+                            }
+                        },
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Траектория маятника в реальном времени'
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'nearest'
+                    }
+                }
             });
 
             const chartPoints = [];
@@ -240,15 +296,21 @@
                 bobTop.style.transform = `translate(${bobX}px, ${bobY}px)`;
                 
                 // Обновление графика (только каждые 50мс)
-                if (elapsed * 1000 - lastChartUpdate > 10) {
+                 if (elapsed * 1000 - lastChartUpdate > 10) {
                     currentChart.data.datasets[0].data.push({
                         x: scaleFactor * Math.sin(angle) * Math.cos(rotationAngle),
                         y: scaleFactor * Math.sin(angle) * Math.sin(rotationAngle)
                     });
                     
-                    if (currentChart.data.datasets[0].data.length > 500) {
-                        currentChart.data.datasets[0].data.shift();
-                    }
+                    // Обновляем границы графика, если точки выходят за пределы
+                    const allX = currentChart.data.datasets[0].data.map(p => p.x);
+                    const allY = currentChart.data.datasets[0].data.map(p => p.y);
+                    
+                    const padding = 0.1;
+                    currentChart.options.scales.x.min = Math.min(...allX) - padding;
+                    currentChart.options.scales.x.max = Math.max(...allX) + padding;
+                    currentChart.options.scales.y.min = Math.min(...allY) - padding;
+                    currentChart.options.scales.y.max = Math.max(...allY) + padding;
                     
                     currentChart.update('none');
                     lastChartUpdate = elapsed * 1000;
