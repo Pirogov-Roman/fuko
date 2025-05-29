@@ -31,6 +31,7 @@
                     <p>Период колебаний маятника: <span id="period-value">0</span>c</p>
                     <p>Период обращения плоскости: <span id="rotation-value">0</span> ч</p>
                     <button id="start-btn">Запустить симуляцию</button>
+                    <button id="stop-btn" style="margin-top: 10px; display: none;">Остановить симуляцию</button>
                 </div>
             </div>
         </div>
@@ -66,8 +67,8 @@
         <div class="charts-row">
             <div class="chart-wrapper">
                 <h3>График траектории в реальном времени</h3>
-                <div class="simulation-timer"></div>
                 <canvas id="chart"></canvas>
+                <div class="simulation-timer"></div>
             </div>
             <div class="chart-wrapper">
                 <h3>Полная траектория</h3>
