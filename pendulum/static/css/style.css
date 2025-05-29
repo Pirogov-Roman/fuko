@@ -85,12 +85,6 @@ body {
     box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
-#chart {
-    width: 100%;
-    height: 250px;
-    margin-top: 10px;
-}
-
 .info-panel {
     flex:1;
     background: #f8f9fa;
@@ -178,19 +172,6 @@ body {
     font-weight: bold;
 }
 
-/* Добавить в конец файла */
-#speed {
-    width: 150px;
-    vertical-align: middle;
-    margin: 0 10px;
-}
-
-#speed-value {
-    display: inline-block;
-    width: 30px;
-    text-align: center;
-}
-
 .bob, .bob2, .string {
     will-change: transform;
     backface-visibility: hidden;
@@ -202,8 +183,6 @@ body {
 }
 
 
-
-/* Графики */
 /* Графики */
 .panel canvas {
     width: 100% !important;
