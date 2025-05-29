@@ -86,7 +86,6 @@
     </div>
 
     <script>
-
         const slider = document.getElementById('speed-slider');
         const display = document.getElementById('speed-display');
         // Обновляем значение при перемещении ползунка
@@ -124,6 +123,9 @@
             const dampingCoef = parseFloat(document.getElementById('damping_coef').value) * 1e-5;
             const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
             const stopTime = parseFloat(document.getElementById('stoptime').value);
+            const maxDeviation = height * Math.sin(initAngle);
+            const visualScale = 5;
+            const chartRange = maxDeviation * visualScale * 1.1;
 
             // Очистка предыдущей анимации
             if (animationId) cancelAnimationFrame(animationId);
@@ -165,52 +167,36 @@
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false, // Добавлено
+                    maintainAspectRatio: false, 
                     animation: {
                         duration: 0
                     },
                     scales: {
                         x: {
+                            min: -chartRange,
+                            max: chartRange,
                             title: {
                                 display: true,
-                                text: 'X координата (усл. ед.)'
-                            },
-                            min: -1.1,
-                            max: 1.1
+                                text: `X координата (м ×${visualScale})`
+                            }
                         },
                         y: {
+                            min: -chartRange,
+                            max: chartRange,
                             title: {
                                 display: true,
-                                text: 'Y координата (усл. ед.)'
-                            },
-                            min: -1.1,
-                            max: 1.1
+                                text: `Y координата (м ×${visualScale})`
+                            }
                         }
                     },
                     plugins: {
-                        zoom: {
-                            zoom: {
-                                wheel: {
-                                    enabled: true
-                                },
-                                pinch: {
-                                    enabled: true
-                                },
-                                mode: 'xy'
-                            },
-                            pan: {
-                                enabled: true,
-                                mode: 'xy'
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
+                                }
                             }
-                        },
-                        legend: {
-                            position: 'top',
-                        },
-                        
-                    },
-                    interaction: {
-                        intersect: false,
-                        mode: 'nearest'
+                        }
                     }
                 }
             });
@@ -227,8 +213,8 @@
                 const rotationAngle = rotationRate * t;
                 
                 // Точки для графика
-                const x = scaleFactor * Math.sin(angle) * Math.cos(rotationAngle);
-                const y = scaleFactor * Math.sin(angle) * Math.sin(rotationAngle);
+                const x = height * Math.sin(angle) * Math.cos(rotationAngle) * visualScale;
+                const y = height * Math.sin(angle) * Math.sin(rotationAngle) * visualScale;
                 chartPoints.push({x, y});
             }
 
@@ -248,30 +234,33 @@
                     maintainAspectRatio: false, // Добавлено
                     animation: { duration: 0 },
                     scales: {
-                        x: { 
-                            min: -scaleFactor*1.1, 
-                            max: scaleFactor*1.1,
+                        x: {
+                            min: -chartRange,
+                            max: chartRange,
                             title: {
                                 display: true,
-                                text: 'X координата (усл. ед.)'
+                                text: `X координата (м ×${visualScale})`
                             }
                         },
-                        y: { 
-                            min: -scaleFactor*1.1, 
-                            max: scaleFactor*1.1,
+                        y: {
+                            min: -chartRange,
+                            max: chartRange,
                             title: {
                                 display: true,
-                                text: 'Y координата (усл. ед.)'
+                                text: `Y координата (м ×${visualScale})`
                             }
                         }
                     },
-    plugins: {
-        legend: {
-            display: true,
-            position: 'top'
-        }
-    }
-}
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
 
             // Элементы DOM
@@ -301,19 +290,13 @@
                 // Обновление графика (только каждые 50мс)
                  if (elapsed * 1000 - lastChartUpdate > 10) {
                     currentChart.data.datasets[0].data.push({
-                        x: scaleFactor * Math.sin(angle) * Math.cos(rotationAngle),
-                        y: scaleFactor * Math.sin(angle) * Math.sin(rotationAngle)
+                        x: height * Math.sin(angle) * Math.cos(rotationAngle) * visualScale,
+                        y: height * Math.sin(angle) * Math.sin(rotationAngle) * visualScale
                     });
                     
                     // Обновляем границы графика, если точки выходят за пределы
                     const allX = currentChart.data.datasets[0].data.map(p => p.x);
                     const allY = currentChart.data.datasets[0].data.map(p => p.y);
-                    
-                    const padding = 0.1;
-                    currentChart.options.scales.x.min = Math.min(...allX) - padding;
-                    currentChart.options.scales.x.max = Math.max(...allX) + padding;
-                    currentChart.options.scales.y.min = Math.min(...allY) - padding;
-                    currentChart.options.scales.y.max = Math.max(...allY) + padding;
                     
                     currentChart.update('none');
                     lastChartUpdate = elapsed * 1000;
@@ -329,7 +312,6 @@
             string.style.transition = 'none';
             bobTop.style.transition = 'none';
             bobTop.style.willChange = 'transform';
-            
             animate();
         }
 
