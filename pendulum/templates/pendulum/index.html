@@ -25,7 +25,7 @@
                     <p>Коэффициент затухания: <input type="number" id="damping_coef" value="0.1" min="0" max="1" step="0.01">1/c</p>
                     <p>Начальный угол: <input type="number" id="init_angle" value="15" min="5" max="30">°</p>
                     <p>Время симуляции: <input type="number" id="stoptime" value="300" min="30" max="3600"> c</p>
-                    <p>Ускорение времени: <input type="range" id="speed-slider" min="1" max="100" value="24"><span id="speed-display">25x</span> </p>
+                    <p>Ускорение времени: <input type="range" id="speed-slider" min="1" max="100" value="1"><span id="speed-display">25x</span> </p>
                 </div>
                 <div class="info-panel">
                     <p>Период колебаний маятника: <span id="period-value">0</span>c</p>
@@ -124,8 +124,7 @@
             const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
             const stopTime = parseFloat(document.getElementById('stoptime').value);
             const maxDeviation = height * Math.sin(initAngle);
-            const visualScale = 5;
-            const chartRange = maxDeviation * visualScale * 1.1;
+            const chartRange = maxDeviation * 1.2; ;
 
             // Очистка предыдущей анимации
             if (animationId) cancelAnimationFrame(animationId);
@@ -177,7 +176,7 @@
                             max: chartRange,
                             title: {
                                 display: true,
-                                text: `X координата (м ×${visualScale})`
+                                text: `X координата (м)`
                             }
                         },
                         y: {
@@ -185,7 +184,7 @@
                             max: chartRange,
                             title: {
                                 display: true,
-                                text: `Y координата (м ×${visualScale})`
+                                text: `Y координата (м)`
                             }
                         }
                     },
@@ -213,8 +212,8 @@
                 const rotationAngle = rotationRate * t;
                 
                 // Точки для графика
-                const x = height * Math.sin(angle) * Math.cos(rotationAngle) * visualScale;
-                const y = height * Math.sin(angle) * Math.sin(rotationAngle) * visualScale;
+                const x = height * Math.sin(angle) * Math.cos(rotationAngle); // Реальные метры
+                const y = height * Math.sin(angle) * Math.sin(rotationAngle); // Реальные метры
                 chartPoints.push({x, y});
             }
 
@@ -239,7 +238,7 @@
                             max: chartRange,
                             title: {
                                 display: true,
-                                text: `X координата (м ×${visualScale})`
+                                text: `X координата (м)`
                             }
                         },
                         y: {
@@ -247,7 +246,7 @@
                             max: chartRange,
                             title: {
                                 display: true,
-                                text: `Y координата (м ×${visualScale})`
+                                text: `Y координата (м)`
                             }
                         }
                     },
@@ -290,8 +289,8 @@
                 // Обновление графика (только каждые 50мс)
                  if (elapsed * 1000 - lastChartUpdate > 10) {
                     currentChart.data.datasets[0].data.push({
-                        x: height * Math.sin(angle) * Math.cos(rotationAngle) * visualScale,
-                        y: height * Math.sin(angle) * Math.sin(rotationAngle) * visualScale
+                        x: height * Math.sin(angle) * Math.cos(rotationAngle), // Реальные метры
+                        y: height * Math.sin(angle) * Math.sin(rotationAngle)  // Реальные метры
                     });
                     
                     // Обновляем границы графика, если точки выходят за пределы
