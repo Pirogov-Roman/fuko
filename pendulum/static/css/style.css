@@ -197,6 +197,7 @@ body {
     border-radius: 8px;
     padding: 15px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
 }
 
 .chart-wrapper h3 {
@@ -216,7 +217,7 @@ body {
 }
 
 .charts-row .chart-wrapper {
-    flex: 1;
+    flex: 1 1 calc(50% - 20px);
     min-width: 0; /* Важно для корректного сжатия */
     max-width: calc(50% - 10px);
 }
@@ -230,3 +231,4 @@ body {
         max-width: 100%;
     }
 }
+

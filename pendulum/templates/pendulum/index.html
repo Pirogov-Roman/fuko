@@ -124,7 +124,6 @@
             const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
             const stopTime = parseFloat(document.getElementById('stoptime').value);
             const maxDeviation = height * Math.sin(initAngle);
-            const chartRange = maxDeviation * 1.2; ;
 
             // Очистка предыдущей анимации
             if (animationId) cancelAnimationFrame(animationId);
@@ -149,118 +148,102 @@
             const scaleFactor = 1;
             const realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
             
-            // Инициализация графика в реальном времени
+            // Генерация точек траектории (ТОЛЬКО ОДИН РАЗ)
+            const chartPoints = [];
+            const totalPoints = 1000;
+            const timeStep = simulationDuration / totalPoints;
+            
+            for (let i = 0; i < totalPoints; i++) {
+                const t = i * timeStep;
+                const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
+                const rotationAngle = rotationRate * t;
+                const x = height * Math.sin(angle) * Math.cos(rotationAngle);
+                const y = height * Math.sin(angle) * Math.sin(rotationAngle);
+                chartPoints.push({x, y});
+            }
+
+            // Рассчитываем диапазон для графиков
+            const maxX = Math.max(...chartPoints.map(p => Math.abs(p.x)));
+            const maxY = Math.max(...chartPoints.map(p => Math.abs(p.y)));
+            const chartRange = Math.max(maxX, maxY) * 1.2;
+
+            // Общие настройки для обоих графиков
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 1,
+                animation: { duration: 0 },
+                scales: {
+                    x: {
+                        min: -chartRange,
+                        max: chartRange,
+                        title: { display: true, text: 'X координата (м)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                    },
+                    y: {
+                        min: -chartRange,
+                        max: chartRange,
+                        title: { display: true, text: 'Y координата (м)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
+                            }
+                        }
+                    },
+                    zoom: {
+                        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' },
+                        pan: { enabled: true, mode: 'xy' },
+                        limits: { 
+                            x: { min: -chartRange*2, max: chartRange*2 },
+                            y: { min: -chartRange*2, max: chartRange*2 } 
+                        }
+                    }
+                }
+            };
+
+            // График в реальном времени (синий)
             const ctx = document.getElementById('chart').getContext('2d');
             currentChart = new Chart(ctx, {
                 type: 'scatter',
                 data: { 
                     datasets: [{
-                        label: 'Траектория маятника',
+                        label: 'Траектория',
                         data: [],
                         borderColor: '#3498db',
                         pointRadius: 0,
                         borderWidth: 1,
                         showLine: true,
-                        fill: false
+                        tension: 0.1
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, 
-                    animation: {
-                        duration: 0
-                    },
-                    scales: {
-                        x: {
-                            min: -chartRange,
-                            max: chartRange,
-                            title: {
-                                display: true,
-                                text: `X координата (м)`
-                            }
-                        },
-                        y: {
-                            min: -chartRange,
-                            max: chartRange,
-                            title: {
-                                display: true,
-                                text: `Y координата (м)`
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
-                                }
-                            }
-                        }
-                    }
-                }
+                options: commonOptions
             });
 
-            const chartPoints = [];
-            const totalPoints = 1000;
-            const timeStep = simulationDuration / totalPoints;
-    
-            for (let i = 0; i < totalPoints; i++) {
-                const t = i * timeStep;
-                
-                // Физические расчеты
-                const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
-                const rotationAngle = rotationRate * t;
-                
-                // Точки для графика
-                const x = height * Math.sin(angle) * Math.cos(rotationAngle); // Реальные метры
-                const y = height * Math.sin(angle) * Math.sin(rotationAngle); // Реальные метры
-                chartPoints.push({x, y});
-            }
 
+            // График полной траектории (красный)
             const ctx2 = document.getElementById('chart2').getContext('2d');
             currentChart2 = new Chart(ctx2, {
                 type: 'scatter',
-                data: { datasets: [{
-                    label: 'Траектория',
-                    data: chartPoints,
-                    borderColor: '#3498db',
-                    pointRadius: 0,
-                    borderWidth: 1,
-                    showLine: true
-                }]},
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Добавлено
-                    animation: { duration: 0 },
-                    scales: {
-                        x: {
-                            min: -chartRange,
-                            max: chartRange,
-                            title: {
-                                display: true,
-                                text: `X координата (м)`
-                            }
-                        },
-                        y: {
-                            min: -chartRange,
-                            max: chartRange,
-                            title: {
-                                display: true,
-                                text: `Y координата (м)`
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
-                                }
-                            }
-                        }
-                    }
-                }
+                data: { 
+                    datasets: [{
+                        label: 'Траектория',
+                        data: chartPoints,
+                        borderColor: '#e74c3c',
+                        pointRadius: 0,
+                        borderWidth: 1,
+                        showLine: true,
+                        tension: 0.1
+                    }]
+                },
+                options: commonOptions
             });
+
 
             // Элементы DOM
             const string = document.querySelector('.string');
