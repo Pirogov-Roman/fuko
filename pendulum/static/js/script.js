@@ -103,59 +103,137 @@ function init3DPendulum() {
     attachment.castShadow = true;
     scene.add(attachment);
     
-    // Пол (только для визуального ориентира)
-    const floorGeometry = new THREE.CircleGeometry(5, 64);
-    const floorMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0xdddddd,
-        side: THREE.DoubleSide,
-        roughness: 0.8,
-        metalness: 0.2
+    // В функции init3DPendulum() заменим создание пола и компаса на более детализированную версию:
+
+// Пол (только для визуального ориентира)
+const floorGeometry = new THREE.CircleGeometry(5, 64);
+const floorMaterial = new THREE.MeshStandardMaterial({ 
+    color: 0xeeeeee,
+    side: THREE.DoubleSide,
+    roughness: 0.7,
+    metalness: 0.1
+});
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.01;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Текстура для пола с радиальными линиями
+const canvas = document.createElement('canvas');
+canvas.width = 1024;
+canvas.height = 1024;
+const context = canvas.getContext('2d');
+context.fillStyle = '#eeeeee';
+context.fillRect(0, 0, canvas.width, canvas.height);
+
+// Рисуем радиальные линии
+context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+context.lineWidth = 2;
+const center = canvas.width / 2;
+const radius = canvas.width / 2;
+
+for (let i = 0; i < 24; i++) {
+    const angle = (i * Math.PI / 12);
+    context.beginPath();
+    context.moveTo(center, center);
+    context.lineTo(
+        center + Math.cos(angle) * radius,
+        center + Math.sin(angle) * radius
+    );
+    context.stroke();
+}
+
+// Концентрические круги
+for (let r = 0.2; r < 1; r += 0.2) {
+    context.beginPath();
+    context.arc(center, center, r * radius, 0, 2 * Math.PI);
+    context.stroke();
+}
+
+const floorTexture = new THREE.CanvasTexture(canvas);
+const patternedFloorMaterial = new THREE.MeshStandardMaterial({
+    map: floorTexture,
+    side: THREE.DoubleSide,
+    roughness: 0.8,
+    metalness: 0.1
+});
+const patternedFloor = new THREE.Mesh(floorGeometry, patternedFloorMaterial);
+patternedFloor.rotation.x = -Math.PI / 2;
+patternedFloor.position.y = 0;
+patternedFloor.receiveShadow = true;
+scene.add(patternedFloor);
+
+// Компас с улучшенными метками
+const createCompassLabel = (text, position, rotation, isCardinal = false) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = isCardinal ? 256 : 128;
+    canvas.height = isCardinal ? 256 : 128;
+    const context = canvas.getContext('2d');
+    
+    // Фон для кардинальных точек
+    if (isCardinal) {
+        context.fillStyle = 'rgba(50, 50, 150, 0.7)';
+        context.beginPath();
+        context.arc(128, 128, 100, 0, 2 * Math.PI);
+        context.fill();
+    }
+    
+    context.font = isCardinal ? 'Bold 120px Arial' : 'Bold 60px Arial';
+    context.fillStyle = isCardinal ? '#ffffff' : 'rgba(50, 50, 150, 0.8)';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, canvas.width/2, canvas.height/2);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const material = new THREE.SpriteMaterial({ 
+        map: texture,
+        transparent: true
     });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = -0.01; // Чуть ниже платформы
-    floor.receiveShadow = true;
-    scene.add(floor);
-    
-    // Роза ветров на полу
-    const compassGeometry = new THREE.RingGeometry(4.8, 5, 64);
-    const compassMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x333333,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.5
-    });
-    const compass = new THREE.Mesh(compassGeometry, compassMaterial);
-    compass.rotation.x = -Math.PI / 2;
-    compass.position.y = -0.005;
-    scene.add(compass);
-    
-    // Метки сторон света
-    const createCompassLabel = (text, position, rotation) => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 64;
-        const context = canvas.getContext('2d');
-        context.font = 'Bold 180px Arial';
-        context.fillStyle = 'rgba(0, 0, 0, 0.8)';
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-        context.fillText(text, 64, 32);
-        
-        const texture = new THREE.CanvasTexture(canvas);
-        const material = new THREE.SpriteMaterial({ map: texture });
-        const sprite = new THREE.Sprite(material);
-        sprite.position.set(position.x, 0, position.z);
-        sprite.rotation.y = rotation;
-        sprite.scale.set(0.5, 0.25, 1);
-        scene.add(sprite);
-    };
-    
-    createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0);
-    createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2);
-    createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI);
-    createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2);
-    
+    const sprite = new THREE.Sprite(material);
+    sprite.position.set(position.x, 0.1, position.z);
+    sprite.rotation.y = rotation;
+    sprite.scale.set(isCardinal ? 0.8 : 0.4, isCardinal ? 0.8 : 0.4, 1);
+    scene.add(sprite);
+};
+
+// Кардинальные точки (большие и на синем фоне)
+createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0, true);
+createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI, true);
+createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2, true);
+createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2, true);
+
+// Промежуточные точки (меньшие)
+createCompassLabel('NE', new THREE.Vector3(3.2, 0, -3.2), Math.PI/4);
+createCompassLabel('SE', new THREE.Vector3(3.2, 0, 3.2), 3*Math.PI/4);
+createCompassLabel('SW', new THREE.Vector3(-3.2, 0, 3.2), -3*Math.PI/4);
+createCompassLabel('NW', new THREE.Vector3(-3.2, 0, -3.2), -Math.PI/4);
+
+// Добавим метки на саму платформу
+const addPlatformMarker = (position, rotation, length = 0.5, color = 0x333333) => {
+    const markerGeometry = new THREE.BoxGeometry(length, 0.02, 0.1);
+    const markerMaterial = new THREE.MeshStandardMaterial({ color });
+    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+    marker.position.set(position.x, 0.02, position.z);
+    marker.rotation.y = rotation;
+    scene.add(marker);
+};
+
+// Добавляем метки по основным направлениям
+addPlatformMarker(new THREE.Vector3(0, 0, -4), 0, 1.0, 0xaa0000); // Север - красная
+addPlatformMarker(new THREE.Vector3(0, 0, 4), 0, 1.0, 0xaa0000); // Юг - красная
+addPlatformMarker(new THREE.Vector3(4, 0, 0), Math.PI/2, 1.0, 0x00aa00); // Восток - зеленая
+addPlatformMarker(new THREE.Vector3(-4, 0, 0), -Math.PI/2, 1.0, 0x00aa00); // Запад - зеленая
+
+// Добавляем метки по промежуточным направлениям
+for (let i = 0; i < 8; i++) {
+    const angle = i * Math.PI / 4;
+    const distance = 4.5;
+    const x = Math.cos(angle) * distance;
+    const z = Math.sin(angle) * distance;
+    addPlatformMarker(new THREE.Vector3(x, 0, z), angle, 0.3);
+}
+
     // Группа для маятника (центр в точке крепления)
     pendulumGroup = new THREE.Group();
     pendulumGroup.position.y = 3.2; // Позиционируем группу в точке крепления
@@ -207,7 +285,8 @@ function update3DPendulum(angle, rotationAngle) {
     if (!is3DInitialized) return;
     
     // Обновляем положение маятника
-    pendulumGroup.rotation.z = -rotationAngle; // Вращение плоскости качания
+    // Вращаем всю группу маятника вокруг оси Y (вертикальной) на угол rotationAngle
+    pendulumGroup.rotation.y = rotationAngle;
     
     // Позиция груза с учетом угла отклонения
     const stringLength = 3; // Длина нити
@@ -215,6 +294,8 @@ function update3DPendulum(angle, rotationAngle) {
     const bobY = -Math.cos(angle) * stringLength;
     
     // Обновляем положение шара (относительно группы)
+    // Теперь bobX отвечает за отклонение в плоскости колебаний,
+    // а bobY - за вертикальное положение
     bob.position.set(bobX, bobY, 0);
     
     // Обновляем нить (линия от центра группы до шара)
@@ -417,12 +498,6 @@ function startSimulation() {
 
     update3DPendulum(angle, rotationAngle);
     
-    // Позиция маятника (вид сверху)
-    const bobX = pendulumLength * Math.sin(angle) * Math.cos(rotationAngle);
-    const bobY = pendulumLength * Math.sin(angle) * Math.sin(rotationAngle);
-
-    // Применяем анимацию только к синему шару
-    document.querySelector('.bob').style.transform = `translate(${bobX}px, ${bobY}px)`;
 
     // Обновление графиков
     if (now - lastChartUpdate > 50) {
