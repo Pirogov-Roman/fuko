@@ -453,7 +453,7 @@ async function startSimulation() {
                         data: [],
                         borderColor: '#3498db',
                         pointRadius: 0,
-                        borderWidth: 2,
+                        borderWidth: 1,
                         showLine: true,
                         tension: 0.1
                     }]
@@ -517,18 +517,11 @@ function animateSimulation(realTimeRatio, stopTime) {
             const x = simulationData.height * Math.sin(angle) * Math.cos(rotationAngle);
             const y = simulationData.height * Math.sin(angle) * Math.sin(rotationAngle);
             
-            if (currentChart.data.datasets[0].data.length === 0) {
-                currentChart.data.datasets[0].data.push({x, y});
-            } else {
-                const lastPoint = currentChart.data.datasets[0].data[currentChart.data.datasets[0].data.length - 1];
-                const distance = Math.sqrt(Math.pow(x - lastPoint.x, 2) + Math.pow(y - lastPoint.y, 2));
-                
-                if (distance > 0.1) {
-                    currentChart.data.datasets[0].data.push({x, y});
-                }
-            }
+            // Всегда добавляем точку, но ограничиваем общее количество
+            currentChart.data.datasets[0].data.push({x, y});
             
-            if (currentChart.data.datasets[0].data.length > 500) {
+            // Ограничиваем количество точек для плавности
+            if (currentChart.data.datasets[0].data.length > 2000) {
                 currentChart.data.datasets[0].data.shift();
             }
             
