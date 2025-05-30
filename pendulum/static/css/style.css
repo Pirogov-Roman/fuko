@@ -317,3 +317,28 @@ body {
     z-index: 2;
 }
 
+#pendulum-3d {
+    width: 100%;
+    height: 500px;
+    margin: 0 auto;
+    background: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.pendulum-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Добавим тень для 3D контейнера */
+.panel:nth-child(2) {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+.panel:nth-child(2):hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
