@@ -61,8 +61,8 @@ function init3DPendulum() {
     
     // Камера
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 2, 5);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(0, 1.5, 5);
+    camera.lookAt(0, 1.5, 0);
     
     // Рендерер
     renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -91,8 +91,20 @@ function init3DPendulum() {
     directionalLight.shadow.camera.far = 10;
     scene.add(directionalLight);
     
-    // Пол с розой ветров
-    const floorGeometry = new THREE.CircleGeometry(3, 64);
+    // Точка крепления маятника (в верхней части колонны)
+    const attachmentGeometry = new THREE.SphereGeometry(0.15, 32, 32);
+    const attachmentMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0x333333,
+        roughness: 0.5,
+        metalness: 0.5
+    });
+    const attachment = new THREE.Mesh(attachmentGeometry, attachmentMaterial);
+    attachment.position.y = 3.2; // Верх колонны + радиус сферы
+    attachment.castShadow = true;
+    scene.add(attachment);
+    
+    // Пол (только для визуального ориентира)
+    const floorGeometry = new THREE.CircleGeometry(5, 64);
     const floorMaterial = new THREE.MeshStandardMaterial({ 
         color: 0xdddddd,
         side: THREE.DoubleSide,
@@ -101,19 +113,21 @@ function init3DPendulum() {
     });
     const floor = new THREE.Mesh(floorGeometry, floorMaterial);
     floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.01; // Чуть ниже платформы
     floor.receiveShadow = true;
     scene.add(floor);
     
     // Роза ветров на полу
-    const compassGeometry = new THREE.RingGeometry(2.8, 3, 64);
+    const compassGeometry = new THREE.RingGeometry(4.8, 5, 64);
     const compassMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x333333,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.7
+        opacity: 0.5
     });
     const compass = new THREE.Mesh(compassGeometry, compassMaterial);
     compass.rotation.x = -Math.PI / 2;
+    compass.position.y = -0.005;
     scene.add(compass);
     
     // Метки сторон света
@@ -122,7 +136,7 @@ function init3DPendulum() {
         canvas.width = 128;
         canvas.height = 64;
         const context = canvas.getContext('2d');
-        context.font = 'Bold 24px Arial';
+        context.font = 'Bold 180px Arial';
         context.fillStyle = 'rgba(0, 0, 0, 0.8)';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
@@ -131,40 +145,28 @@ function init3DPendulum() {
         const texture = new THREE.CanvasTexture(canvas);
         const material = new THREE.SpriteMaterial({ map: texture });
         const sprite = new THREE.Sprite(material);
-        sprite.position.copy(position);
+        sprite.position.set(position.x, 0, position.z);
         sprite.rotation.y = rotation;
         sprite.scale.set(0.5, 0.25, 1);
         scene.add(sprite);
     };
     
-    createCompassLabel('N', new THREE.Vector3(0, 0.01, -2.5), 0);
-    createCompassLabel('E', new THREE.Vector3(2.5, 0.01, 0), Math.PI/2);
-    createCompassLabel('S', new THREE.Vector3(0, 0.01, 2.5), Math.PI);
-    createCompassLabel('W', new THREE.Vector3(-2.5, 0.01, 0), -Math.PI/2);
+    createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0);
+    createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2);
+    createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI);
+    createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2);
     
-    // Потолок (точка крепления)
-    const ceilingGeometry = new THREE.CylinderGeometry(0.3, 0.3, 0.1, 32);
-    const ceilingMaterial = new THREE.MeshStandardMaterial({ 
-        color: 0x555555,
-        roughness: 0.7,
-        metalness: 0.3
-    });
-    const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-    ceiling.position.y = 3;
-    ceiling.castShadow = true;
-    scene.add(ceiling);
-    
-    // Группа для маятника (чтобы вращать всю конструкцию)
+    // Группа для маятника (центр в точке крепления)
     pendulumGroup = new THREE.Group();
+    pendulumGroup.position.y = 3.2; // Позиционируем группу в точке крепления
     scene.add(pendulumGroup);
     
     // Нить маятника
     const stringGeometry = new THREE.BufferGeometry();
     const stringMaterial = new THREE.LineBasicMaterial({ 
-        color: 0x666666,
+        color: 0x555555,
         linewidth: 2
     });
-    
     string = new THREE.Line(stringGeometry, stringMaterial);
     pendulumGroup.add(string);
     
@@ -178,12 +180,6 @@ function init3DPendulum() {
     bob = new THREE.Mesh(bobGeometry, bobMaterial);
     bob.castShadow = true;
     pendulumGroup.add(bob);
-    
-    // Ось маятника (для визуализации)
-    const axisGeometry = new THREE.BufferGeometry();
-    const axisMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
-    const axis = new THREE.Line(axisGeometry, axisMaterial);
-    pendulumGroup.add(axis);
     
     is3DInitialized = true;
     
@@ -214,25 +210,17 @@ function update3DPendulum(angle, rotationAngle) {
     pendulumGroup.rotation.z = -rotationAngle; // Вращение плоскости качания
     
     // Позиция груза с учетом угла отклонения
-    const stringLength = 2.7; // Длина нити (чуть меньше высоты потолка)
+    const stringLength = 3; // Длина нити
     const bobX = Math.sin(angle) * stringLength;
     const bobY = -Math.cos(angle) * stringLength;
     
-    // Обновляем положение шара
+    // Обновляем положение шара (относительно группы)
     bob.position.set(bobX, bobY, 0);
     
-    // Обновляем нить (линия от потолка до шара)
+    // Обновляем нить (линия от центра группы до шара)
     const points = [
-        new THREE.Vector3(0, 0, 0), // Точка крепления (центр группы)
+        new THREE.Vector3(0, 0, 0), // Центр группы (точка крепления)
         new THREE.Vector3(bobX, bobY, 0) // Положение шара
-    ];
-    string.geometry.dispose();
-    string.geometry = new THREE.BufferGeometry().setFromPoints(points);
-    
-    // Обновляем ось (для визуализации плоскости качания)
-    const axisPoints = [
-        new THREE.Vector3(0, 0, 0),
-        new THREE.Vector3(0, 0, 3 * Math.sign(rotationAngle))
     ];
     string.geometry.dispose();
     string.geometry = new THREE.BufferGeometry().setFromPoints(points);
