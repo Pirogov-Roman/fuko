@@ -183,7 +183,7 @@ const slider = document.getElementById('speed-slider');
         }
 
         // Создаем оба графика
-        currentChart = createChart('chart', [], '#3498db'); // График реального времени (синий)
+        currentChart = createChart('chart', [], '#3498db', 0.5); // График реального времени (синий)
         currentChart2 = createChart('chart2', [], 'rgba(231, 76, 60, 0.5)'); // График полной траектории
 
         // Добавляем все точки на график полной траектории
@@ -254,7 +254,7 @@ const slider = document.getElementById('speed-slider');
                     label: 'Пройденная траектория',
                     data: currentPoints,
                     borderColor: '#e74c3c',
-                    borderWidth: 2,
+                    borderWidth: 1,
                     pointRadius: 0,
                     showLine: true
                 },
