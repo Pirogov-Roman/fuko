@@ -48,9 +48,9 @@ def simulate(request):
             full_trajectory_points = []
             if rotation_rate != 0:
                 full_rotation_time = abs(2 * math.pi / rotation_rate)  # Время одного полного оборота
-                time_step = full_rotation_time / 1000  # Фиксированное количество точек
+                time_step = full_rotation_time / 5000  # Фиксированное количество точек
                 
-                for i in range(1001):  # +1 чтобы замкнуть траекторию
+                for i in range(5001):  # +1 чтобы замкнуть траекторию
                     t = i * time_step
                     angle = math.radians(init_angle) * math.exp(-damping_coef * 1e-5 * t) * math.cos(
                         math.sqrt(oscill_rate**2 - (damping_coef * 1e-5)**2) * t)

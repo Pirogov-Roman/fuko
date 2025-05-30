@@ -444,23 +444,38 @@ async function startSimulation() {
 
         // График реального времени (синий) - изначально пустой
         currentChart = new Chart(
-            document.getElementById('chart').getContext('2d'),
-            {
-                type: 'scatter',
-                data: { 
-                    datasets: [{
-                        label: 'Траектория в реальном времени',
-                        data: [],
-                        borderColor: '#3498db',
-                        pointRadius: 0,
-                        borderWidth: 1,
-                        showLine: true,
-                        tension: 0.1
-                    }]
+    document.getElementById('chart').getContext('2d'),
+    {
+        type: 'scatter',
+        data: { 
+            datasets: [{
+                label: 'Траектория в реальном времени',
+                data: [],
+                borderColor: '#3498db80',
+                pointRadius: 0,
+                borderWidth: 1,
+                showLine: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            ...commonOptions,
+            scales: {
+                ...commonOptions.scales,
+                x: {
+                    ...commonOptions.scales.x,
+                    min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2,
+                    max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2
                 },
-                options: commonOptions
+                y: {
+                    ...commonOptions.scales.y,
+                    min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2,
+                    max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2
+                }
             }
-        );
+        }
+    }
+);
 
         // Запускаем анимацию
         animateSimulation(realTimeRatio, stopTime);
