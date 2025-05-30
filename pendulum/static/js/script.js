@@ -57,11 +57,11 @@ function init3DPendulum() {
     
     // Сцена
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf8f9fa);
+    scene.background = new THREE.Color(0xe0e0e0);
     
     // Камера
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-    camera.position.set(0, 1.5, 5);
+    camera.position.set(0, 1.5, 7);
     camera.lookAt(0, 1.5, 0);
     
     // Рендерер
@@ -91,7 +91,7 @@ function init3DPendulum() {
     directionalLight.shadow.camera.far = 10;
     scene.add(directionalLight);
     
-    // Точка крепления маятника (в верхней части колонны)
+    // Точка крепления маятника 
     const attachmentGeometry = new THREE.SphereGeometry(0.15, 32, 32);
     const attachmentMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x333333,
@@ -99,140 +99,139 @@ function init3DPendulum() {
         metalness: 0.5
     });
     const attachment = new THREE.Mesh(attachmentGeometry, attachmentMaterial);
-    attachment.position.y = 3.2; // Верх колонны + радиус сферы
+    attachment.position.y = 3.2; //радиус сферы
     attachment.castShadow = true;
     scene.add(attachment);
     
-    // В функции init3DPendulum() заменим создание пола и компаса на более детализированную версию:
 
-// Пол (только для визуального ориентира)
-const floorGeometry = new THREE.CircleGeometry(5, 64);
-const floorMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0xeeeeee,
-    side: THREE.DoubleSide,
-    roughness: 0.7,
-    metalness: 0.1
-});
-const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-floor.rotation.x = -Math.PI / 2;
-floor.position.y = -0.01;
-floor.receiveShadow = true;
-scene.add(floor);
-
-// Текстура для пола с радиальными линиями
-const canvas = document.createElement('canvas');
-canvas.width = 1024;
-canvas.height = 1024;
-const context = canvas.getContext('2d');
-context.fillStyle = '#eeeeee';
-context.fillRect(0, 0, canvas.width, canvas.height);
-
-// Рисуем радиальные линии
-context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
-context.lineWidth = 2;
-const center = canvas.width / 2;
-const radius = canvas.width / 2;
-
-for (let i = 0; i < 24; i++) {
-    const angle = (i * Math.PI / 12);
-    context.beginPath();
-    context.moveTo(center, center);
-    context.lineTo(
-        center + Math.cos(angle) * radius,
-        center + Math.sin(angle) * radius
-    );
-    context.stroke();
-}
-
-// Концентрические круги
-for (let r = 0.2; r < 1; r += 0.2) {
-    context.beginPath();
-    context.arc(center, center, r * radius, 0, 2 * Math.PI);
-    context.stroke();
-}
-
-const floorTexture = new THREE.CanvasTexture(canvas);
-const patternedFloorMaterial = new THREE.MeshStandardMaterial({
-    map: floorTexture,
-    side: THREE.DoubleSide,
-    roughness: 0.8,
-    metalness: 0.1
-});
-const patternedFloor = new THREE.Mesh(floorGeometry, patternedFloorMaterial);
-patternedFloor.rotation.x = -Math.PI / 2;
-patternedFloor.position.y = 0;
-patternedFloor.receiveShadow = true;
-scene.add(patternedFloor);
-
-// Компас с улучшенными метками
-const createCompassLabel = (text, position, rotation, isCardinal = false) => {
-    const canvas = document.createElement('canvas');
-    canvas.width = isCardinal ? 256 : 128;
-    canvas.height = isCardinal ? 256 : 128;
-    const context = canvas.getContext('2d');
-    
-    // Фон для кардинальных точек
-    if (isCardinal) {
-        context.fillStyle = 'rgba(50, 50, 150, 0.7)';
-        context.beginPath();
-        context.arc(128, 128, 100, 0, 2 * Math.PI);
-        context.fill();
-    }
-    
-    context.font = isCardinal ? 'Bold 120px Arial' : 'Bold 60px Arial';
-    context.fillStyle = isCardinal ? '#ffffff' : 'rgba(50, 50, 150, 0.8)';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillText(text, canvas.width/2, canvas.height/2);
-    
-    const texture = new THREE.CanvasTexture(canvas);
-    const material = new THREE.SpriteMaterial({ 
-        map: texture,
-        transparent: true
+    // Пол (только для визуального ориентира)
+    const floorGeometry = new THREE.CircleGeometry(5, 64);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xeeeeee,
+        side: THREE.DoubleSide,
+        roughness: 0.7,
+        metalness: 0.1
     });
-    const sprite = new THREE.Sprite(material);
-    sprite.position.set(position.x, 0.1, position.z);
-    sprite.rotation.y = rotation;
-    sprite.scale.set(isCardinal ? 0.8 : 0.4, isCardinal ? 0.8 : 0.4, 1);
-    scene.add(sprite);
-};
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
 
-// Кардинальные точки (большие и на синем фоне)
-createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0, true);
-createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI, true);
-createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2, true);
-createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2, true);
+    // Текстура для пола с радиальными линиями
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#eeeeee';
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
-// Промежуточные точки (меньшие)
-createCompassLabel('NE', new THREE.Vector3(3.2, 0, -3.2), Math.PI/4);
-createCompassLabel('SE', new THREE.Vector3(3.2, 0, 3.2), 3*Math.PI/4);
-createCompassLabel('SW', new THREE.Vector3(-3.2, 0, 3.2), -3*Math.PI/4);
-createCompassLabel('NW', new THREE.Vector3(-3.2, 0, -3.2), -Math.PI/4);
+    // Рисуем радиальные линии
+    context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+    context.lineWidth = 2;
+    const center = canvas.width / 2;
+    const radius = canvas.width / 2;
 
-// Добавим метки на саму платформу
-const addPlatformMarker = (position, rotation, length = 0.5, color = 0x333333) => {
-    const markerGeometry = new THREE.BoxGeometry(length, 0.02, 0.1);
-    const markerMaterial = new THREE.MeshStandardMaterial({ color });
-    const marker = new THREE.Mesh(markerGeometry, markerMaterial);
-    marker.position.set(position.x, 0.02, position.z);
-    marker.rotation.y = rotation;
-    scene.add(marker);
-};
+    for (let i = 0; i < 24; i++) {
+        const angle = (i * Math.PI / 12);
+        context.beginPath();
+        context.moveTo(center, center);
+        context.lineTo(
+            center + Math.cos(angle) * radius,
+            center + Math.sin(angle) * radius
+        );
+        context.stroke();
+    }
 
-// Добавляем метки по основным направлениям
-addPlatformMarker(new THREE.Vector3(0, 0, -4), 0, 1.0, 0xaa0000); // Север - красная
-addPlatformMarker(new THREE.Vector3(0, 0, 4), 0, 1.0, 0xaa0000); // Юг - красная
-addPlatformMarker(new THREE.Vector3(4, 0, 0), Math.PI/2, 1.0, 0x00aa00); // Восток - зеленая
-addPlatformMarker(new THREE.Vector3(-4, 0, 0), -Math.PI/2, 1.0, 0x00aa00); // Запад - зеленая
+    // Концентрические круги
+    for (let r = 0.2; r < 1; r += 0.2) {
+        context.beginPath();
+        context.arc(center, center, r * radius, 0, 2 * Math.PI);
+        context.stroke();
+    }
 
-// Добавляем метки по промежуточным направлениям
-for (let i = 0; i < 8; i++) {
-    const angle = i * Math.PI / 4;
-    const distance = 4.5;
-    const x = Math.cos(angle) * distance;
-    const z = Math.sin(angle) * distance;
-    addPlatformMarker(new THREE.Vector3(x, 0, z), angle, 0.3);
-}
+    const floorTexture = new THREE.CanvasTexture(canvas);
+    const patternedFloorMaterial = new THREE.MeshStandardMaterial({
+        map: floorTexture,
+        side: THREE.DoubleSide,
+        roughness: 0.8,
+        metalness: 0.1
+    });
+    const patternedFloor = new THREE.Mesh(floorGeometry, patternedFloorMaterial);
+    patternedFloor.rotation.x = -Math.PI / 2;
+    patternedFloor.position.y = 0;
+    patternedFloor.receiveShadow = true;
+    scene.add(patternedFloor);
+
+    // Компас с улучшенными метками
+    const createCompassLabel = (text, position, rotation, isCardinal = false) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = isCardinal ? 256 : 128;
+        canvas.height = isCardinal ? 256 : 128;
+        const context = canvas.getContext('2d');
+        
+        // Фон для кардинальных точек
+        if (isCardinal) {
+            context.fillStyle = 'rgba(50, 50, 150, 0.7)';
+            context.beginPath();
+            context.arc(128, 128, 100, 0, 2 * Math.PI);
+            context.fill();
+        }
+        
+        context.font = isCardinal ? 'Bold 120px Arial' : 'Bold 60px Arial';
+        context.fillStyle = isCardinal ? '#ffffff' : 'rgba(50, 50, 150, 0.8)';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(text, canvas.width/2, canvas.height/2);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        const material = new THREE.SpriteMaterial({ 
+            map: texture,
+            transparent: true
+        });
+        const sprite = new THREE.Sprite(material);
+        sprite.position.set(position.x, 0.1, position.z);
+        sprite.rotation.y = rotation;
+        sprite.scale.set(isCardinal ? 0.8 : 0.4, isCardinal ? 0.8 : 0.4, 1);
+        scene.add(sprite);
+    };
+
+    // Кардинальные точки (большие и на синем фоне)
+    createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0, true);
+    createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI, true);
+    createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2, true);
+    createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2, true);
+
+    // Промежуточные точки (меньшие)
+    createCompassLabel('NE', new THREE.Vector3(3.2, 0, -3.2), Math.PI/4);
+    createCompassLabel('SE', new THREE.Vector3(3.2, 0, 3.2), 3*Math.PI/4);
+    createCompassLabel('SW', new THREE.Vector3(-3.2, 0, 3.2), -3*Math.PI/4);
+    createCompassLabel('NW', new THREE.Vector3(-3.2, 0, -3.2), -Math.PI/4);
+
+    // Добавим метки на саму платформу
+    const addPlatformMarker = (position, rotation, length = 0.5, color = 0x333333) => {
+        const markerGeometry = new THREE.BoxGeometry(length, 0.02, 0.1);
+        const markerMaterial = new THREE.MeshStandardMaterial({ color });
+        const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+        marker.position.set(position.x, 0.02, position.z);
+        marker.rotation.y = rotation;
+        scene.add(marker);
+    };
+
+    // Добавляем метки по основным направлениям
+    addPlatformMarker(new THREE.Vector3(0, 0, -4), 0, 1.0, 0xaa0000); // Север - красная
+    addPlatformMarker(new THREE.Vector3(0, 0, 4), 0, 1.0, 0xaa0000); // Юг - красная
+    addPlatformMarker(new THREE.Vector3(4, 0, 0), Math.PI/2, 1.0, 0x00aa00); // Восток - зеленая
+    addPlatformMarker(new THREE.Vector3(-4, 0, 0), -Math.PI/2, 1.0, 0x00aa00); // Запад - зеленая
+
+    // Добавляем метки по промежуточным направлениям
+    for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4;
+        const distance = 4.5;
+        const x = Math.cos(angle) * distance;
+        const z = Math.sin(angle) * distance;
+        addPlatformMarker(new THREE.Vector3(x, 0, z), angle, 0.3);
+    }
 
     // Группа для маятника (центр в точке крепления)
     pendulumGroup = new THREE.Group();
@@ -351,7 +350,6 @@ function startSimulation() {
     const totalPoints = 1000;
     const timeStep = simulationDuration / totalPoints;
 
-    // В функции startSimulation() обновляем генерацию точек:
     for (let i = 0; i < totalPoints; i++) {
         const t = i * timeStep;
         const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
@@ -431,7 +429,6 @@ function startSimulation() {
     canvasElement.insertAdjacentElement('afterend', timerElement);
 
     // График в реальном времени (синий) - изначально пустой
-    // Функция создания графиков
     function createChart(elementId, data, color, isFullTrajectory = false) {
         const ctx = document.getElementById(elementId).getContext('2d');
         return new Chart(ctx, {
@@ -451,18 +448,13 @@ function startSimulation() {
         });
     }
 
-    // Создаем оба графика
-    currentChart = createChart('chart', [], '#3498db', 0.5); // График реального времени (синий)
-    currentChart2 = createChart('chart2', [], '#e74c3c'); // График полной траектории
+    // Создаем график полной траектории (красный)
+    currentChart2 = createChart('chart2', fullTrajectoryPoints, '#e74c3c', true);
 
-    // Добавляем все точки на график полной траектории
-    currentChart2.data.datasets[0].data = fullTrajectoryPoints;
-    currentChart2.update();
+    // Создаем график реального времени (синий) с теми же данными, но изначально пустой
+    currentChart = createChart('chart', [], '#3498db');
 
     // Элементы DOM
-    const string = document.querySelector('.string');
-    const bobTop = document.querySelector('.bob');
-    const bobSide = document.querySelector('.bob2');
     let startTime = Date.now();
     let lastChartUpdate = 0;
     let lastTimerUpdate = 0;
@@ -471,167 +463,174 @@ function startSimulation() {
 
     // Функция анимации
     function animate() {
-    const now = Date.now();
-    const elapsed = (now - startTime) / 1000;
+        const now = Date.now();
+        const elapsed = (now - startTime) / 1000;
 
-    // Проверяем изменение коэффициента ускорения
-    const newRealTimeRatio = parseFloat(document.getElementById('speed-slider').value);
-    if (newRealTimeRatio !== lastRealTimeRatio) {
-        accumulatedTime += elapsed * lastRealTimeRatio;
-        startTime = now;
-        lastRealTimeRatio = newRealTimeRatio;
-        document.querySelector('.speed-value').textContent = newRealTimeRatio;
-    }
-
-    const simulatedTime = accumulatedTime + elapsed * realTimeRatio;
-
-    // Обновляем таймер
-    if (now - lastTimerUpdate > 100) {
-        document.querySelector('.timer-value').textContent = simulatedTime.toFixed(1);
-        lastTimerUpdate = now;
-    }
-
-    // Расчет текущего состояния
-    const angle = initAngle * Math.exp(-dampingCoef * simulatedTime) * 
-                Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * simulatedTime);
-    const rotationAngle = rotationRate * simulatedTime;
-
-    update3DPendulum(angle, rotationAngle);
-    
-
-    // Обновление графиков
-    if (now - lastChartUpdate > 50) {
-        const chartX = height * Math.sin(angle) * Math.cos(rotationAngle);
-        const chartY = height * Math.sin(angle) * Math.sin(rotationAngle);
-        
-        // Добавляем новую точку к графику реального времени
-        currentChart.data.datasets[0].data.push({
-            x: chartX,
-            y: chartY
-        });
-        
-        // Ограничиваем количество точек для производительности
-        if (currentChart.data.datasets[0].data.length > 500) {
-            currentChart.data.datasets[0].data.shift();
+        // Проверяем изменение коэффициента ускорения
+        const newRealTimeRatio = parseFloat(document.getElementById('speed-slider').value);
+        if (newRealTimeRatio !== lastRealTimeRatio) {
+            accumulatedTime += elapsed * lastRealTimeRatio;
+            startTime = now;
+            lastRealTimeRatio = newRealTimeRatio;
+            document.querySelector('.speed-value').textContent = newRealTimeRatio;
         }
-        
-        currentChart.update('none');
-        lastChartUpdate = now;
+
+        const simulatedTime = accumulatedTime + elapsed * realTimeRatio;
+
+        // Обновляем таймер
+        if (now - lastTimerUpdate > 100) {
+            document.querySelector('.timer-value').textContent = simulatedTime.toFixed(1);
+            lastTimerUpdate = now;
+        }
+
+        // Расчет текущего состояния
+        const angle = initAngle * Math.exp(-dampingCoef * simulatedTime) * 
+                    Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * simulatedTime);
+        const rotationAngle = rotationRate * simulatedTime;
+
+        update3DPendulum(angle, rotationAngle);
+
+        // Обновление графиков
+        if (now - lastChartUpdate > 50) {
+            // Рассчитываем текущую позицию маятника
+            const x = height * Math.sin(angle) * Math.cos(rotationAngle);
+            const y = height * Math.sin(angle) * Math.sin(rotationAngle);
+            
+            // Добавляем новую точку в график реального времени
+            if (currentChart.data.datasets[0].data.length === 0) {
+                currentChart.data.datasets[0].data.push({x, y});
+            } else {
+                // Добавляем новую точку только если маятник существенно переместился
+                const lastPoint = currentChart.data.datasets[0].data[currentChart.data.datasets[0].data.length - 1];
+                const distance = Math.sqrt(Math.pow(x - lastPoint.x, 2) + Math.pow(y - lastPoint.y, 2));
+                
+                if (distance > 0.1) { // Порог для добавления новой точки
+                    currentChart.data.datasets[0].data.push({x, y});
+                }
+            }
+            
+            // Ограничиваем количество точек для плавности анимации
+            if (currentChart.data.datasets[0].data.length > 500) {
+                currentChart.data.datasets[0].data.shift();
+            }
+            
+            currentChart.update('none');
+            lastChartUpdate = now;
+        }
+
+        // Продолжаем анимацию
+        if (simulatedTime < stopTime) {
+            animationId = requestAnimationFrame(animate);
+        } else {
+            isSimulationRunning = false;
+            document.getElementById('start-btn').style.display = 'inline-block';
+            document.getElementById('stop-btn').style.display = 'none';
+        }
     }
 
-    // Продолжаем анимацию
-    if (simulatedTime < stopTime) {
-        animationId = requestAnimationFrame(animate);
-    } else {
-        isSimulationRunning = false;
-        document.getElementById('start-btn').style.display = 'inline-block';
-        document.getElementById('stop-btn').style.display = 'none';
-    }
+    animate();
 }
 
-        animate();
+// График зависимости периода от широты
+function calculateRotationPeriod(latitude) {
+    const earthRot = 7.2921159e-5;
+    const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
+    return rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
 }
 
-        // График зависимости периода от широты
-        function calculateRotationPeriod(latitude) {
-            const earthRot = 7.2921159e-5;
-            const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
-            return rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
-        }
+const latitudes = [];
+const periods = [];
+for (let lat = -90; lat <= 90; lat += 5) {
+    latitudes.push(lat);
+    periods.push(calculateRotationPeriod(lat));
+}
 
-        const latitudes = [];
-        const periods = [];
-        for (let lat = -90; lat <= 90; lat += 5) {
-            latitudes.push(lat);
-            periods.push(calculateRotationPeriod(lat));
-        }
+const specialPoints = [
+    { name: "Северный полюс", lat: 90, period: calculateRotationPeriod(90) },
+    { name: "Южный полюс", lat: -90, period: calculateRotationPeriod(-90) },
+    { name: "Мурманск", lat: 68.97, period: calculateRotationPeriod(68.97) },
+    { name: "Гринвич (Лондон)", lat: 51.4779, period: calculateRotationPeriod(51.4779) },
+    { name: "Исаакиевский собор (СПб)", lat: 59.9341, period: calculateRotationPeriod(59.9341) },
+    { name: "Нью-Йорк", lat: 40.7128, period: calculateRotationPeriod(40.7128) },
+    { name: "Пекин", lat: 39.9042, period: calculateRotationPeriod(39.9042) },
+    { name: "Экватор", lat: 0, period: calculateRotationPeriod(0) },
+    { name: "Париж", lat: 48.8566, period: calculateRotationPeriod(48.8566) },
+    { name: "Сидней", lat: -33.8688, period: calculateRotationPeriod(-33.8688) }
+];
 
-        const specialPoints = [
-            { name: "Северный полюс", lat: 90, period: calculateRotationPeriod(90) },
-            { name: "Южный полюс", lat: -90, period: calculateRotationPeriod(-90) },
-            { name: "Мурманск", lat: 68.97, period: calculateRotationPeriod(68.97) },
-            { name: "Гринвич (Лондон)", lat: 51.4779, period: calculateRotationPeriod(51.4779) },
-            { name: "Исаакиевский собор (СПб)", lat: 59.9341, period: calculateRotationPeriod(59.9341) },
-            { name: "Нью-Йорк", lat: 40.7128, period: calculateRotationPeriod(40.7128) },
-            { name: "Пекин", lat: 39.9042, period: calculateRotationPeriod(39.9042) },
-            { name: "Экватор", lat: 0, period: calculateRotationPeriod(0) },
-            { name: "Париж", lat: 48.8566, period: calculateRotationPeriod(48.8566) },
-            { name: "Сидней", lat: -33.8688, period: calculateRotationPeriod(-33.8688) }
-        ];
-
-        const ctx3 = document.getElementById('latitude-period-chart').getContext('2d');
-        new Chart(ctx3, {
-            type: 'line',
-            data: {
-                labels: latitudes,
-                datasets: [
-                    {
-                        label: 'Период обращения (часы)',
-                        data: periods,
-                        borderColor: '#e74c3c',
-                        backgroundColor: 'rgba(231, 76, 60, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
-                    },
-                    {
-                        label: 'Известные места',
-                        data: specialPoints.map(point => {
-                            const closestLatIndex = latitudes.reduce((prev, curr, idx) => 
-                                Math.abs(curr - point.lat) < Math.abs(latitudes[prev] - point.lat) ? idx : prev, 0);
-                            return {
-                                x: latitudes[closestLatIndex],
-                                y: periods[closestLatIndex]
-                            };
-                        }),
-                        pointBackgroundColor: specialPoints.map((_, i) => 
-                            i === 0 ? '#2c3e50' :
-                            i === 1 ? '#2c3e50' : 
-                            i === 7 ? '#27ae60' :
-                            '#3498db'
-                        ),
-                        pointRadius: specialPoints.map((_, i) => 5),
-                        pointHoverRadius: 8,
-                        showLine: false,
-                        pointStyle: 'circle'
-                    }
-                ]
+const ctx3 = document.getElementById('latitude-period-chart').getContext('2d');
+new Chart(ctx3, {
+    type: 'line',
+    data: {
+        labels: latitudes,
+        datasets: [
+            {
+                label: 'Период обращения (часы)',
+                data: periods,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    x: {
-                        title: {
-                            display: true,
-                            text: 'Широта (градусы)'
-                        }
-                    },
-                    y: {
-                        title: {
-                            display: true,
-                            text: 'Период обращения (часы)'
-                        },
-                        min: 0
-                    }
+            {
+                label: 'Известные места',
+                data: specialPoints.map(point => {
+                    const closestLatIndex = latitudes.reduce((prev, curr, idx) => 
+                        Math.abs(curr - point.lat) < Math.abs(latitudes[prev] - point.lat) ? idx : prev, 0);
+                    return {
+                        x: latitudes[closestLatIndex],
+                        y: periods[closestLatIndex]
+                    };
+                }),
+                pointBackgroundColor: specialPoints.map((_, i) => 
+                    i === 0 ? '#2c3e50' :
+                    i === 1 ? '#2c3e50' : 
+                    i === 7 ? '#27ae60' :
+                    '#3498db'
+                ),
+                pointRadius: specialPoints.map((_, i) => 5),
+                pointHoverRadius: 8,
+                showLine: false,
+                pointStyle: 'circle'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: 'Широта (градусы)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'Период обращения (часы)'
                 },
-                plugins: {
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                if (context.datasetIndex === 0) {
-                                    return `Период: ${context.raw.toFixed(2)} часов`;
-                                } else {
-                                    const point = specialPoints[context.dataIndex];
-                                    return [
-                                        point.name,
-                                        `Широта: ${point.lat}° (точное значение)`,
-                                        `Период: ${point.period.toFixed(2)} часов`
-                                    ];
-                                }
-                            }
+                min: 0
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        if (context.datasetIndex === 0) {
+                            return `Период: ${context.raw.toFixed(2)} часов`;
+                        } else {
+                            const point = specialPoints[context.dataIndex];
+                            return [
+                                point.name,
+                                `Широта: ${point.lat}° (точное значение)`,
+                                `Период: ${point.period.toFixed(2)} часов`
+                            ];
                         }
                     }
                 }
             }
-        });
+        }
+    }
+});

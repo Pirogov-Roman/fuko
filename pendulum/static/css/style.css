@@ -15,7 +15,7 @@ body {
 
 .panel {
     flex:1;
-    background: white;
+    background: rgba(255, 255, 255, 0.845);
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     padding: 20px;
@@ -64,75 +64,6 @@ body {
     padding: 20px;
 }
 
-.bob {
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    background: radial-gradient(circle at 30% 30%, #3498db, #2980b9);
-    border-radius: 50%;
-    top: 50%;
-    left: 50%;
-    margin-left: -15px;
-    margin-top: -15px;
-    transform: translate(0, 0);
-    will-change: transform;
-    backface-visibility: hidden;
-    transform-style: preserve-3d;
-    transition: transform 0.1s linear;
-    z-index: 3;
-}
-
-.axes {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
-    transform-origin: center;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-    
-}
-
-.x-axis, .y-axis {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.2);
-}
-
-.x-axis {
-    width: 100%;
-    height: 1px;
-    top: 50%;
-    left: 0;
-}
-
-.y-axis {
-    width: 1px;
-    height: 100%;
-    left: 50%;
-    top: 0;
-}
-
-
-
-.x-label {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(0, 0, 0, 0.5);
-    font-weight: bold;
-}
-
-.y-label {
-    position: absolute;
-    left: 50%;
-    top: 10px;
-    transform: translateX(-50%);
-    color: rgba(0, 0, 0, 0.5);
-    font-weight: bold;
-}
-
 .leaflet-container .leaflet-control-attribution {
   display: none !important;
 }
@@ -141,8 +72,8 @@ body {
 .panel canvas {
     width: 100% !important;
     height: auto !important;
-    aspect-ratio: 1 / 1; /* Фиксируем квадратное соотношение */
-    max-height: 400px; /* Ограничиваем максимальную высоту */
+    aspect-ratio: 1 / 1; 
+    max-height: 400px; 
     display: block;
     margin: 0 auto;
 }
@@ -156,10 +87,10 @@ body {
 }
 
 .chart-wrapper canvas {
-    flex-grow: 1; /* Растягиваем canvas на всю доступную высоту */
+    flex-grow: 1; 
     width: 100% !important;
     height: 100% !important;
-    min-height: 300px; /* Минимальная высота */
+    min-height: 300px; 
     aspect-ratio: 1 / 1;
 }
 
@@ -176,16 +107,16 @@ body {
     display: flex;
     gap: 20px;
     margin: 0 -10px;
-    align-items: stretch; /* Добавлено для выравнивания высоты */
+    align-items: stretch; 
 }
 
 .charts-row .chart-wrapper {
     flex: 1 1 calc(50% - 20px);
-    min-width: 0; /* Важно для корректного сжатия */
+    min-width: 0; 
     max-width: calc(50% - 10px);
 }
 
-/* Адаптивность для мобильных */
+/* aдаптивность для мобильных */
 @media (max-width: 768px) {
     .charts-row {
         flex-direction: column;
@@ -205,9 +136,9 @@ body {
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     border: 1px solid rgba(0,0,0,0.05);
     font-family: 'Arial', sans-serif;
-    margin: 10px 0 0 0; /* Изменяем отступы: 10px сверху, остальные 0 */
+    margin: 10px 0 0 0; 
     display: inline-block;
-    width: calc(100% - 24px); /* Учитываем padding */
+    width: calc(100% - 24px); 
 }
 
 .timer-container {
@@ -274,37 +205,6 @@ body {
     background: #c0392b;
 }
 
-#pendulum-3d {
-    width: 100%;
-    height: 400px;
-    margin: 0 auto;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
-/* Добавьте эти стили в конец файла */
-
-/* 3D контейнер */
-#pendulum-3d {
-    width: 100%;
-    height: 400px;
-    margin: 0 auto;
-    background: #f8f9fa;
-    border-radius: 4px;
-    position: relative;
-    overflow: hidden;
-}
-
-/* Анимация маятника (вид сверху) */
-.pendulum-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-    overflow: hidden;
-    background: #f8f9fa;
-    border-radius: 4px;
-}
-
 .ceiling {
     position: absolute;
     width: 100px;
@@ -319,21 +219,15 @@ body {
 
 #pendulum-3d {
     width: 100%;
-    height: 500px;
+    height: 100%;
     margin: 0 auto;
-    background: #f8f9fa;
+    background: #ffffff;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 70vh; 
 }
 
-.pendulum-container {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-}
-
-/* Добавим тень для 3D контейнера */
+/* тень для 3D контейнера */
 .panel:nth-child(2) {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     transition: box-shadow 0.3s ease;
