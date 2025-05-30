@@ -16,7 +16,6 @@ map.on('click', function(e) {
     document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
 });
 
-// Глобальные переменные
 let animationId = null;
 let currentChart = null;
 let currentChart2 = null;
@@ -145,7 +144,6 @@ function init3DPendulum() {
     patternedFloor.receiveShadow = true;
     scene.add(patternedFloor);
 
-    // Компас с метками
     const createCompassLabel = (text, position, rotation, isCardinal = false) => {
         const canvas = document.createElement('canvas');
         canvas.width = isCardinal ? 256 : 128;
@@ -177,13 +175,11 @@ function init3DPendulum() {
         scene.add(sprite);
     };
 
-    // Кардинальные точки
     createCompassLabel('N', new THREE.Vector3(0, 0, -4.5), 0, true);
     createCompassLabel('S', new THREE.Vector3(0, 0, 4.5), Math.PI, true);
     createCompassLabel('E', new THREE.Vector3(4.5, 0, 0), Math.PI/2, true);
     createCompassLabel('W', new THREE.Vector3(-4.5, 0, 0), -Math.PI/2, true);
 
-    // Промежуточные точки
     createCompassLabel('NE', new THREE.Vector3(3.2, 0, -3.2), Math.PI/4);
     createCompassLabel('SE', new THREE.Vector3(3.2, 0, 3.2), 3*Math.PI/4);
     createCompassLabel('SW', new THREE.Vector3(-3.2, 0, 3.2), -3*Math.PI/4);
@@ -194,7 +190,6 @@ function init3DPendulum() {
     pendulumGroup.position.y = 3.2;
     scene.add(pendulumGroup);
     
-    // Нить маятника
     const stringGeometry = new THREE.BufferGeometry();
     const stringMaterial = new THREE.LineBasicMaterial({ 
         color: 0x555555,
@@ -203,7 +198,6 @@ function init3DPendulum() {
     string = new THREE.Line(stringGeometry, stringMaterial);
     pendulumGroup.add(string);
     
-    // Груз маятника
     const bobGeometry = new THREE.SphereGeometry(0.2, 32, 32);
     const bobMaterial = new THREE.MeshPhongMaterial({ 
         color: 0x3498db,
@@ -226,7 +220,6 @@ function init3DPendulum() {
     
     window.addEventListener('resize', onWindowResize);
     
-    // Анимация
     function animate3D() {
         requestAnimationFrame(animate3D);
         controls.update();
@@ -240,13 +233,10 @@ function update3DPendulum(angle, rotationAngle) {
     if (!is3DInitialized) return;
     
     pendulumGroup.rotation.y = rotationAngle;
-    
     const stringLength = 3;
     const bobX = Math.sin(angle) * stringLength;
     const bobY = -Math.cos(angle) * stringLength;
-    
     bob.position.set(bobX, bobY, 0);
-    
     const points = [
         new THREE.Vector3(0, 0, 0),
         new THREE.Vector3(bobX, bobY, 0)
@@ -348,12 +338,8 @@ async function startSimulation() {
             dampingCoef: dampingCoef * 1e-5,
             height: height
         };
-
-        // Обновляем информацию о периоде
         document.getElementById('period-value').textContent = data.period.toFixed(2);
         document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
-
-        // Рассчитываем диапазон для графиков
         const maxX = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x)));
         const maxY = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y)));
         const chartRange = Math.max(maxX, maxY) * 1.2;
@@ -397,7 +383,6 @@ async function startSimulation() {
                 }
             }
         };
-
         // Создаем элемент для таймера
         const realTimeChartWrapper = document.querySelector('.chart-wrapper:first-child');
         const timerElement = document.createElement('div');
@@ -444,38 +429,38 @@ async function startSimulation() {
 
         // График реального времени (синий) - изначально пустой
         currentChart = new Chart(
-    document.getElementById('chart').getContext('2d'),
-    {
-        type: 'scatter',
-        data: { 
-            datasets: [{
-                label: 'Траектория в реальном времени',
-                data: [],
-                borderColor: '#3498db80',
-                pointRadius: 0,
-                borderWidth: 1,
-                showLine: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            ...commonOptions,
-            scales: {
-                ...commonOptions.scales,
-                x: {
-                    ...commonOptions.scales.x,
-                    min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2,
-                    max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2
+            document.getElementById('chart').getContext('2d'),
+            {
+                type: 'scatter',
+                data: { 
+                    datasets: [{
+                        label: 'Траектория в реальном времени',
+                        data: [],
+                        borderColor: '#3498db80',
+                        pointRadius: 0,
+                        borderWidth: 1,
+                        showLine: true,
+                        tension: 0.1
+                    }]
                 },
-                y: {
-                    ...commonOptions.scales.y,
-                    min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2,
-                    max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2
+                options: {
+                    ...commonOptions,
+                    scales: {
+                        ...commonOptions.scales,
+                        x: {
+                            ...commonOptions.scales.x,
+                            min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2,
+                            max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2
+                        },
+                        y: {
+                            ...commonOptions.scales.y,
+                            min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2,
+                            max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2
+                        }
+                    }
                 }
             }
-        }
-    }
-);
+        );
 
         // Запускаем анимацию
         animateSimulation(realTimeRatio, stopTime);
