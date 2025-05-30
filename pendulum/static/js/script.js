@@ -22,188 +22,169 @@ const slider = document.getElementById('speed-slider');
         let animationId = null;
         let currentChart = null;
         let currentChart2 = null;
-        let isSimulationRunning = false;
 
         // Обработчик кнопки запуска
         document.getElementById('start-btn').addEventListener('click', function() {           
             startSimulation();
         });
-
-        // Обработчик кнопки остановки
-        document.getElementById('stop-btn').addEventListener('click', function() {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-            }
-            isSimulationRunning = false;
-            document.getElementById('start-btn').style.display = 'inline-block';
-            document.getElementById('stop-btn').style.display = 'none';
-        });
         
         function startSimulation() {
-        // Получаем параметры
-        const latitude = parseFloat(document.getElementById('latitude').textContent);
-        const height = parseFloat(document.getElementById('height').value);
-        const dampingCoef = parseFloat(document.getElementById('damping_coef').value) * 1e-5;
-        const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
-        const stopTime = parseFloat(document.getElementById('stoptime').value);
-        let realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
+    // Получаем параметры
+    const latitude = parseFloat(document.getElementById('latitude').textContent);
+    const height = parseFloat(document.getElementById('height').value);
+    const dampingCoef = parseFloat(document.getElementById('damping_coef').value) * 1e-5;
+    const initAngle = parseFloat(document.getElementById('init_angle').value) * Math.PI / 180;
+    const stopTime = parseFloat(document.getElementById('stoptime').value);
+    const maxDeviation = height * Math.sin(initAngle);
+    let realTimeRatio = parseFloat(document.getElementById('speed-slider').value);
 
-        // Очистка предыдущей анимации
-        if (animationId) cancelAnimationFrame(animationId);
-        if (currentChart) currentChart.destroy();
-        if (currentChart2) currentChart2.destroy();
+    // Очистка предыдущей анимации
+    if (animationId) cancelAnimationFrame(animationId);
+    if (currentChart) currentChart.destroy();
+    if (currentChart2) currentChart2.destroy();
 
-        // Удаляем старый таймер, если он есть
-        const oldTimer = document.querySelector('.simulation-timer');
-        if (oldTimer) oldTimer.remove();
-        document.getElementById('start-btn').style.display = 'none';
-        document.getElementById('stop-btn').style.display = 'inline-block';
-        isSimulationRunning = true;
+    // Удаляем старый таймер, если он есть
+    const oldTimer = document.querySelector('.simulation-timer');
+    if (oldTimer) oldTimer.remove();
 
-        // Физические константы
-        const g = 9.81;
-        const earthRot = 7.2921159e-5;
-        const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
-        const period = 2 * Math.PI * Math.sqrt(height / g);
-        const oscillRate = (2 * Math.PI)/period;
-        const rotationPeriod = rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
-        const simulationDuration = rotationPeriod*3600;
+    // Физические константы
+    const g = 9.81;
+    const earthRot = 7.2921159e-5;
+    const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
+    const period = 2 * Math.PI * Math.sqrt(height / g);
+    const oscillRate = (2 * Math.PI)/period;
+    const rotationPeriod = rotationRate ? (2 * Math.PI) / (Math.abs(rotationRate) * 3600) : Infinity;
+    const simulationDuration = rotationPeriod*3600;
 
-        // Обновляем информацию о периоде
-        document.getElementById('period-value').textContent = period.toFixed(2);
-        document.getElementById('rotation-value').textContent = rotationPeriod.toFixed(2);
+    // Обновляем информацию о периоде
+    document.getElementById('period-value').textContent = period.toFixed(2);
+    document.getElementById('rotation-value').textContent = rotationPeriod.toFixed(2);
 
-        // Параметры анимации
-        const pendulumLength = 200;
-        
-        // Генерация точек для полной траектории (один раз)
-        const fullTrajectoryPoints = [];
-        const totalPoints = 1000;
-        const timeStep = simulationDuration / totalPoints;
-        
-        // В функции startSimulation() обновляем генерацию точек:
-        for (let i = 0; i < totalPoints; i++) {
-            const t = i * timeStep;
-            const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
-            const rotationAngle = rotationRate * t;
-            const x = height * Math.sin(angle) * Math.cos(rotationAngle);
-            const y = height * Math.sin(angle) * Math.sin(rotationAngle);
-            fullTrajectoryPoints.push({x, y, t});
-        }
+    // Параметры анимации
+    const pendulumLength = 200;
+    const scaleFactor = 1;
+    
+    // Генерация точек для полной траектории (один раз)
+    const fullTrajectoryPoints = [];
+    const totalPoints = 1000;
+    const timeStep = simulationDuration / totalPoints;
+    
+    for (let i = 0; i < totalPoints; i++) {
+        const t = i * timeStep;
+        const angle = initAngle * Math.exp(-dampingCoef * t) * Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * t);
+        const rotationAngle = rotationRate * t;
+        const x = height * Math.sin(angle) * Math.cos(rotationAngle);
+        const y = height * Math.sin(angle) * Math.sin(rotationAngle);
+        fullTrajectoryPoints.push({x, y});
+    }
 
-        // Рассчитываем диапазон для графиков
-        const maxX = Math.max(...fullTrajectoryPoints.map(p => Math.abs(p.x)));
-        const maxY = Math.max(...fullTrajectoryPoints.map(p => Math.abs(p.y)));
-        const chartRange = Math.max(maxX, maxY) * 1.2;
+    // Рассчитываем диапазон для графиков
+    const maxX = Math.max(...fullTrajectoryPoints.map(p => Math.abs(p.x)));
+    const maxY = Math.max(...fullTrajectoryPoints.map(p => Math.abs(p.y)));
+    const chartRange = Math.max(maxX, maxY) * 1.2;
 
-        // Общие настройки для обоих графиков
-        const commonOptions = {
-            responsive: true,
-            maintainAspectRatio: true,
-            aspectRatio: 1,
-            animation: { duration: 0 },
-            scales: {
-                x: {
-                    min: -chartRange,
-                    max: chartRange,
-                    title: { display: true, text: 'X координата (м)' },
-                    grid: { color: 'rgba(0, 0, 0, 0.1)' }
-                },
-                y: {
-                    min: -chartRange,
-                    max: chartRange,
-                    title: { display: true, text: 'Y координата (м)' },
-                    grid: { color: 'rgba(0, 0, 0, 0.1)' }
+    // Общие настройки для обоих графиков
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1,
+        animation: { duration: 0 },
+        scales: {
+            x: {
+                min: -chartRange,
+                max: chartRange,
+                title: { display: true, text: 'X координата (м)' },
+                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+            },
+            y: {
+                min: -chartRange,
+                max: chartRange,
+                title: { display: true, text: 'Y координата (м)' },
+                grid: { color: 'rgba(0, 0, 0, 0.1)' }
+            }
+        },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
+                    }
                 }
             },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `X=${context.parsed.x.toFixed(2)} м, Y=${context.parsed.y.toFixed(2)} м`;
-                        }
-                    }
-                },
-                zoom: {
-                    zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' },
-                    pan: { enabled: true, mode: 'xy' },
-                    limits: { 
-                        x: { min: -chartRange*2, max: chartRange*2 },
-                        y: { min: -chartRange*2, max: chartRange*2 } 
-                    }
+            zoom: {
+                zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'xy' },
+                pan: { enabled: true, mode: 'xy' },
+                limits: { 
+                    x: { min: -chartRange*2, max: chartRange*2 },
+                    y: { min: -chartRange*2, max: chartRange*2 } 
                 }
             }
-        };
+        }
+    };
 
-        // Создаем элемент для таймера
-        const realTimeChartWrapper = document.querySelector('.chart-wrapper:first-child');
-        const timerElement = document.createElement('div');
-        timerElement.className = 'simulation-timer';
-        timerElement.innerHTML = `
-            <div class="timer-container">
-                <div class="timer-icon">⏱</div>
-                <div class="timer-values">
-                    <div class="timer-row">
-                        <span class="timer-label">Прошло:</span>
-                        <span class="timer-value">0.0</span>
-                        <span class="timer-unit">сек</span>
-                    </div>
-                    <div class="timer-row">
-                        <span class="timer-label">Ускорение:</span>
-                        <span class="speed-value">${realTimeRatio}</span>
-                        <span class="timer-unit">x</span>
-                    </div>
+    // Создаем элемент для таймера
+    const realTimeChartWrapper = document.querySelector('.chart-wrapper:first-child');
+    const timerElement = document.createElement('div');
+    timerElement.className = 'simulation-timer';
+    timerElement.innerHTML = `
+        <div class="timer-container">
+            <div class="timer-icon">⏱</div>
+            <div class="timer-values">
+                <div class="timer-row">
+                    <span class="timer-label">Прошло:</span>
+                    <span class="timer-value">0.0</span>
+                    <span class="timer-unit">сек</span>
+                </div>
+                <div class="timer-row">
+                    <span class="timer-label">Ускорение:</span>
+                    <span class="speed-value">${realTimeRatio}</span>
+                    <span class="timer-unit">x</span>
                 </div>
             </div>
-        `;
-        const canvasElement = realTimeChartWrapper.querySelector('canvas');
-        canvasElement.insertAdjacentElement('afterend', timerElement);
+        </div>
+    `;
+    const titleElement = realTimeChartWrapper.querySelector('h3');
+    titleElement.insertAdjacentElement('afterend', timerElement);
+    realTimeChartWrapper.insertBefore(timerElement, realTimeChartWrapper.querySelector('canvas'));
 
-        // График в реальном времени (синий) - изначально пустой
-        // Функция создания графиков
-        function createChart(elementId, data, color, isFullTrajectory = false) {
-            const ctx = document.getElementById(elementId).getContext('2d');
-            return new Chart(ctx, {
-                type: 'scatter',
-                data: { 
-                    datasets: [{
-                        label: isFullTrajectory ? 'Полная траектория' : 'Траектория в реальном времени',
-                        data: data,
-                        borderColor: color,
-                        pointRadius: 0,
-                        borderWidth: isFullTrajectory ? 1 : 2, // Более толстая линия для реального времени
-                        showLine: true,
-                        tension: 0.1
-                    }]
-                },
-                options: commonOptions
-            });
-        }
+    // График в реальном времени (синий) - изначально пустой
+    function createChart(elementId, data, color) {
+    const ctx = document.getElementById(elementId).getContext('2d');
+    return new Chart(ctx, {
+        type: 'scatter',
+        data: { 
+            datasets: [{
+                label: 'Траектория',
+                data: data,
+                borderColor: color,
+                pointRadius: 0,
+                borderWidth: 1,
+                showLine: true,
+                tension: 0.1
+            }]
+        },
+        options: commonOptions
+    });
+}
 
-        // Создаем оба графика
-        currentChart = createChart('chart', [], '#3498db'); // График реального времени (синий)
-        currentChart2 = createChart('chart2', [], 'rgba(231, 76, 60, 0.5)'); // График полной траектории
+currentChart = createChart('chart', [], '#3498db');
+currentChart2 = createChart('chart2', fullTrajectoryPoints, '#e74c3c');
 
-        // Добавляем все точки на график полной траектории
-        currentChart2.data.datasets[0].data = fullTrajectoryPoints;
-        currentChart2.update();
+    // Элементы DOM
+    const string = document.querySelector('.string');
+    const bobTop = document.querySelector('.bob');
+    const bobSide = document.querySelector('.bob2');
+    let startTime = Date.now();
+    let lastChartUpdate = 0;
+    let lastTimerUpdate = 0;
+    let accumulatedTime = 0;
+    let lastRealTimeRatio = realTimeRatio;
 
-        // Элементы DOM
-        const string = document.querySelector('.string');
-        const bobTop = document.querySelector('.bob');
-        const bobSide = document.querySelector('.bob2');
-        let startTime = Date.now();
-        let lastChartUpdate = 0;
-        let lastTimerUpdate = 0;
-        let accumulatedTime = 0;
-        let lastRealTimeRatio = realTimeRatio;
-
-        // Функция анимации
-        function animate() {
+    // Функция анимации
+    function animate() {
         const now = Date.now();
-        const elapsed = (now - startTime) / 1000;
+        const elapsed = (now - startTime) / 1000; // в секундах
         
         // Проверяем изменение коэффициента ускорения
         const newRealTimeRatio = parseFloat(document.getElementById('speed-slider').value);
@@ -216,13 +197,13 @@ const slider = document.getElementById('speed-slider');
         
         const simulatedTime = accumulatedTime + elapsed * realTimeRatio;
         
-        // Обновляем таймер
+        // Обновляем таймер (не чаще чем раз в 100мс)
         if (now - lastTimerUpdate > 100) {
             document.querySelector('.timer-value').textContent = simulatedTime.toFixed(1);
             lastTimerUpdate = now;
         }
         
-        // Расчет текущего состояния
+        // Расчет текущего состояния (как в оригинале для плавности)
         const angle = initAngle * Math.exp(-dampingCoef * simulatedTime) * 
                     Math.cos(Math.sqrt(oscillRate**2 - dampingCoef**2) * simulatedTime);
         const rotationAngle = rotationRate * simulatedTime;
@@ -231,70 +212,34 @@ const slider = document.getElementById('speed-slider');
         const bobX = pendulumLength * Math.sin(angle) * Math.cos(rotationAngle);
         const bobY = pendulumLength * Math.sin(angle) * Math.sin(rotationAngle);
         
-        // Применяем анимацию
+        // Применяем анимацию БЕЗ CSS transition (чтобы избежать дёрганий)
         string.style.transform = `rotate(${angle * 180/Math.PI}deg)`;
         bobTop.style.transform = `translate(${bobX}px, ${bobY}px)`;
         
-        // Обновление графиков
+        // Обновление графика реального времени (только каждые 50мс)
         if (now - lastChartUpdate > 50) {
-            // Для графика реального времени - добавляем только текущую точку
+            // Добавляем точку, рассчитанную по тем же формулам, что и полная траектория
             const chartX = height * Math.sin(angle) * Math.cos(rotationAngle);
             const chartY = height * Math.sin(angle) * Math.sin(rotationAngle);
             
-            // Добавляем новую точку к графику реального времени
             currentChart.data.datasets[0].data.push({
                 x: chartX,
                 y: chartY
             });
             
-            // Для полной траектории - выделяем пройденную часть
-            const currentPoints = fullTrajectoryPoints.filter(p => p.t <= simulatedTime);
-            currentChart2.data.datasets = [
-                {
-                    label: 'Пройденная траектория',
-                    data: currentPoints,
-                    borderColor: '#e74c3c',
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    showLine: true
-                },
-                {
-                    label: 'Предстоящая траектория',
-                    data: fullTrajectoryPoints.filter(p => p.t > simulatedTime),
-                    borderColor: 'rgba(231, 76, 60, 0.3)',
-                    borderWidth: 1,
-                    pointRadius: 0,
-                    showLine: true
-                }
-            ];
-            
             currentChart.update('none');
-            currentChart2.update('none');
             lastChartUpdate = now;
         }
         
-        // Продолжаем анимацию
+        // Продолжаем анимацию, если прошло меньше времени симуляции
         if (simulatedTime < stopTime) {
             animationId = requestAnimationFrame(animate);
-        } else {
-            // По завершении оставляем только полную траекторию
-            currentChart2.data.datasets = [{
-                label: 'Полная траектория',
-                data: fullTrajectoryPoints,
-                borderColor: '#e74c3c',
-                borderWidth: 1,
-                pointRadius: 0,
-                showLine: true
-            }];
-            currentChart2.update();
-            
-            // Оставляем все точки на графике реального времени
-            currentChart.update();
         }
     }
+    
 
-        animate();
-    }
+    animate();
+}
 
         // График зависимости периода от широты
         function calculateRotationPeriod(latitude) {
