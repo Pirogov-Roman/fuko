@@ -342,7 +342,7 @@ async function startSimulation() {
         document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
         const maxX = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x)));
         const maxY = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y)));
-        const chartRange = Math.max(maxX, maxY) * 1.2;
+        const chartRange = Math.max(maxX, maxY);
 
         // Общие настройки для графиков
         const commonOptions = {
@@ -443,22 +443,7 @@ async function startSimulation() {
                         tension: 0.1
                     }]
                 },
-                options: {
-                    ...commonOptions,
-                    scales: {
-                        ...commonOptions.scales,
-                        x: {
-                            ...commonOptions.scales.x,
-                            min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2,
-                            max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x))) * 1.2
-                        },
-                        y: {
-                            ...commonOptions.scales.y,
-                            min: -Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2,
-                            max: Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y))) * 1.2
-                        }
-                    }
-                }
+                options: commonOptions
             }
         );
 
@@ -516,15 +501,9 @@ function animateSimulation(realTimeRatio, stopTime) {
         if (now - lastChartUpdate > 50) {
             const x = simulationData.height * Math.sin(angle) * Math.cos(rotationAngle);
             const y = simulationData.height * Math.sin(angle) * Math.sin(rotationAngle);
-            
-            // Всегда добавляем точку, но ограничиваем общее количество
+    
+            // Добавляем точку без ограничения количества
             currentChart.data.datasets[0].data.push({x, y});
-            
-            // Ограничиваем количество точек для плавности
-            if (currentChart.data.datasets[0].data.length > 2000) {
-                currentChart.data.datasets[0].data.shift();
-            }
-            
             currentChart.update('none');
             lastChartUpdate = now;
         }
