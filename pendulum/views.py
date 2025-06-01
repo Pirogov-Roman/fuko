@@ -45,7 +45,7 @@ def simulate(request):
             
             rotation_period = float('inf') if rotation_rate == 0 else (2 * math.pi) / (abs(rotation_rate) * 3600)
             
-            # Генерация точек траектории - теперь на основе одного полного периода вращения
+            # Генерация точек траектории
             full_trajectory_points = []
             if rotation_rate != 0:
                 full_rotation_time = abs(2 * math.pi / rotation_rate)  # Время одного полного оборота
