@@ -31,6 +31,9 @@ function init3DPendulum() {
     if (is3DInitialized) return;
     
     const container = document.getElementById('pendulum-3d');
+    container.style.height = 'calc(100% - 30px)';
+    container.style.margin = '0';
+    container.style.padding = '0';
     
     // Очистка предыдущего содержимого
     while (container.firstChild) {
@@ -227,6 +230,7 @@ function init3DPendulum() {
     }
     
     animate3D();
+    onWindowResize();
 }
 
 function update3DPendulum(angle, rotationAngle) {
