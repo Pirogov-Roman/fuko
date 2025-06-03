@@ -339,7 +339,7 @@ async function startSimulation() {
         simulationData = {
             ...data,
             initAngle: initAngle * Math.PI / 180,
-            dampingCoef: dampingCoef * 1e-5,
+            dampingCoef: dampingCoef,
             height: height
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
