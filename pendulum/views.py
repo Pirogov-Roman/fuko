@@ -42,7 +42,6 @@ def simulate(request):
             rotation_rate = earth_rot * math.sin(math.radians(latitude))
             period = 2 * math.pi * math.sqrt(height / g)
             oscill_rate = (2 * math.pi)/period
-            
             rotation_period = float('inf') if rotation_rate == 0 else (2 * math.pi) / (abs(rotation_rate) * 3600)
             
             # Генерация точек траектории
@@ -61,7 +60,6 @@ def simulate(request):
                     y = height * math.sin(angle) * math.sin(rotation_angle)
                     full_trajectory_points.append({'x': x, 'y': y, 't': t})
             else:
-                # На экваторе - просто линейная траектория
                 x = height * math.sin(math.radians(init_angle))
                 full_trajectory_points.append({'x': x, 'y': 0, 't': 0})
                 full_trajectory_points.append({'x': -x, 'y': 0, 't': period/2})
