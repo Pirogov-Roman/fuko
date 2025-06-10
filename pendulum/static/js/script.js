@@ -10,20 +10,10 @@ display.textContent = slider.value + 'x';
 const map = L.map('map').setView([0, 0], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// Переменные для хранения координат
-let currentLatitude = 0;
-let currentLongitude = 0;
-
 // Обработчик клика по карте
 map.on('click', function(e) {
-    currentLatitude = e.latlng.lat;
-    currentLongitude = e.latlng.lng;
-    document.getElementById('latitude').textContent = currentLatitude.toFixed(2);
-    document.getElementById('longitude').textContent = currentLongitude.toFixed(2);
-    if (is3DInitialized) {
-        updateFloorTexture(currentLatitude);
-        rotateFloor(currentLongitude);
-    }
+    document.getElementById('latitude').textContent = e.latlng.lat.toFixed(2);
+    document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
 });
 
 let animationId = null;
@@ -36,82 +26,11 @@ let simulationData = null;
 let scene, camera, renderer, controls;
 let pendulumGroup, bob, string;
 let is3DInitialized = false;
-let patternedFloor = null;
-
-// Функция создания текстуры пола с учетом широты
-function createFloorTexture(latitude) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 1024;
-    const context = canvas.getContext('2d');
-    
-    // Фон
-    context.fillStyle = '#eeeeee';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const center = canvas.width / 2;
-    const radius = canvas.width / 2;
-    
-    // Меридианы (линии долготы)
-    context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
-    context.lineWidth = 2;
-    
-    // Количество меридианов зависит от широты (больше у полюсов)
-    const meridiansCount = Math.max(12, Math.min(36, Math.round(36 * Math.abs(Math.cos(latitude * Math.PI / 180)))));
-    for (let i = 0; i < meridiansCount; i++) {
-        const angle = (i * 2 * Math.PI / meridiansCount);
-        context.beginPath();
-        context.moveTo(center, center);
-        context.lineTo(
-            center + Math.cos(angle) * radius,
-            center + Math.sin(angle) * radius
-        );
-        context.stroke();
-    }
-
-    // Параллели (линии широты) - больше у экватора
-    const parallelsCount = Math.max(6, Math.min(12, Math.round(12 * Math.abs(Math.sin(latitude * Math.PI / 180)))));
-    for (let r = 0.2; r < 1; r += 1/parallelsCount) {
-        context.beginPath();
-        context.arc(center, center, r * radius, 0, 2 * Math.PI);
-        context.stroke();
-    }
-
-    // Центральная линия (выделенная)
-    context.strokeStyle = 'rgba(150, 150, 150, 0.5)';
-    context.lineWidth = 3;
-    context.beginPath();
-    context.arc(center, center, radius, 0, 2 * Math.PI);
-    context.stroke();
-
-    return new THREE.CanvasTexture(canvas);
-}
-
-// Обновление текстуры пола
-function updateFloorTexture(latitude) {
-    if (!patternedFloor) return;
-    
-    const newTexture = createFloorTexture(latitude);
-    if (patternedFloor.material.map) {
-        patternedFloor.material.map.dispose();
-    }
-    patternedFloor.material.map = newTexture;
-    patternedFloor.material.needsUpdate = true;
-}
-
-// Поворот пола по долготе
-function rotateFloor(longitude) {
-    if (!patternedFloor) return;
-    patternedFloor.rotation.z = -longitude * Math.PI / 180;
-}
 
 function init3DPendulum() {
     if (is3DInitialized) return;
     
     const container = document.getElementById('pendulum-3d');
-    container.style.height = 'calc(100% - 30px)';
-    container.style.margin = '0';
-    container.style.padding = '0';
     
     // Очистка предыдущего содержимого
     while (container.firstChild) {
@@ -154,7 +73,7 @@ function init3DPendulum() {
     directionalLight.shadow.camera.far = 10;
     scene.add(directionalLight);
     
-    // Точка крепления маятника
+    // Точка крепления маятника 
     const attachmentGeometry = new THREE.SphereGeometry(0.15, 32, 32);
     const attachmentMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x333333,
@@ -166,22 +85,65 @@ function init3DPendulum() {
     attachment.castShadow = true;
     scene.add(attachment);
     
-    // Пол с координатной сеткой
+    // Пол с текстурой
     const floorGeometry = new THREE.CircleGeometry(5, 64);
-    const floorTexture = createFloorTexture(currentLatitude);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+        color: 0xeeeeee,
+        side: THREE.DoubleSide,
+        roughness: 0.7,
+        metalness: 0.1
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.01;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Текстура для пола с радиальными линиями
+    const canvas = document.createElement('canvas');
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#eeeeee';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Рисуем радиальные линии
+    context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
+    context.lineWidth = 2;
+    const center = canvas.width / 2;
+    const radius = canvas.width / 2;
+
+    for (let i = 0; i < 24; i++) {
+        const angle = (i * Math.PI / 12);
+        context.beginPath();
+        context.moveTo(center, center);
+        context.lineTo(
+            center + Math.cos(angle) * radius,
+            center + Math.sin(angle) * radius
+        );
+        context.stroke();
+    }
+
+    // Концентрические круги
+    for (let r = 0.2; r < 1; r += 0.2) {
+        context.beginPath();
+        context.arc(center, center, r * radius, 0, 2 * Math.PI);
+        context.stroke();
+    }
+
+    const floorTexture = new THREE.CanvasTexture(canvas);
     const patternedFloorMaterial = new THREE.MeshStandardMaterial({
         map: floorTexture,
         side: THREE.DoubleSide,
         roughness: 0.8,
         metalness: 0.1
     });
-    patternedFloor = new THREE.Mesh(floorGeometry, patternedFloorMaterial);
+    const patternedFloor = new THREE.Mesh(floorGeometry, patternedFloorMaterial);
     patternedFloor.rotation.x = -Math.PI / 2;
     patternedFloor.position.y = 0;
     patternedFloor.receiveShadow = true;
     scene.add(patternedFloor);
 
-    // Компасные направления
     const createCompassLabel = (text, position, rotation, isCardinal = false) => {
         const canvas = document.createElement('canvas');
         canvas.width = isCardinal ? 256 : 128;
@@ -265,7 +227,6 @@ function init3DPendulum() {
     }
     
     animate3D();
-    onWindowResize();
 }
 
 function update3DPendulum(angle, rotationAngle) {
@@ -282,11 +243,7 @@ function update3DPendulum(angle, rotationAngle) {
     ];
     string.geometry.dispose();
     string.geometry = new THREE.BufferGeometry().setFromPoints(points);
-    
-    // Обновляем ориентацию пола по долготе
-    rotateFloor(currentLongitude);
 }
-
 
 // Обработчик кнопки запуска
 document.getElementById('start-btn').addEventListener('click', function() {           
@@ -378,7 +335,7 @@ async function startSimulation() {
         simulationData = {
             ...data,
             initAngle: initAngle * Math.PI / 180,
-            dampingCoef: dampingCoef,
+            dampingCoef: dampingCoef * 1e-5,
             height: height
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
