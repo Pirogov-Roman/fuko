@@ -31,9 +31,6 @@ function init3DPendulum() {
     if (is3DInitialized) return;
     
     const container = document.getElementById('pendulum-3d');
-    container.style.height = 'calc(100% - 30px)';
-    container.style.margin = '0';
-    container.style.padding = '0';
     
     // Очистка предыдущего содержимого
     while (container.firstChild) {
@@ -230,7 +227,6 @@ function init3DPendulum() {
     }
     
     animate3D();
-    onWindowResize();
 }
 
 function update3DPendulum(angle, rotationAngle) {
@@ -340,7 +336,8 @@ async function startSimulation() {
             ...data,
             initAngle: initAngle * Math.PI / 180,
             dampingCoef: dampingCoef * 1e-5,
-            height: height
+            height: height,
+            latitude: latitude
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
         document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
@@ -422,12 +419,26 @@ async function startSimulation() {
                         data: data.full_trajectory_points,
                         borderColor: '#e74c3c',
                         pointRadius: 0,
-                        borderWidth: 1,
+                        borderWidth: 0.4,
                         showLine: true,
-                        tension: 0.1
+                        tension: 0.1,
+                        fill: false
                     }]
                 },
-                options: commonOptions
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = data.full_trajectory_points[context.dataIndex];
+                                    return `X=${point.x.toFixed(2)} м, Y=${point.y.toFixed(2)} м`;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         );
 
@@ -442,7 +453,7 @@ async function startSimulation() {
                         data: [],
                         borderColor: '#3498db80',
                         pointRadius: 0,
-                        borderWidth: 1,
+                        borderWidth: 0.5,
                         showLine: true,
                         tension: 0.1
                     }]
@@ -497,7 +508,9 @@ function animateSimulation(realTimeRatio, stopTime) {
         // Расчет текущего состояния
         const angle = simulationData.initAngle * Math.exp(-simulationData.dampingCoef * simulatedTime) * 
                     Math.cos(Math.sqrt(simulationData.oscill_rate**2 - simulationData.dampingCoef**2) * simulatedTime);
-        const rotationAngle = simulationData.rotation_rate * simulatedTime;
+        
+        // На экваторе (широта 0°) rotationAngle должен быть 0
+        const rotationAngle = simulationData.latitude === 0 ? 0 : simulationData.rotation_rate * simulatedTime;
 
         update3DPendulum(angle, rotationAngle);
 
