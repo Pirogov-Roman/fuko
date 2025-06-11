@@ -419,12 +419,26 @@ async function startSimulation() {
                         data: data.full_trajectory_points,
                         borderColor: '#e74c3c',
                         pointRadius: 0,
-                        borderWidth: 1,
+                        borderWidth: 0.4,
                         showLine: true,
-                        tension: 0.1
+                        tension: 0.1,
+                        fill: false
                     }]
                 },
-                options: commonOptions
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        ...commonOptions.plugins,
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const point = data.full_trajectory_points[context.dataIndex];
+                                    return `X=${point.x.toFixed(2)} м, Y=${point.y.toFixed(2)} м`;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         );
 
@@ -439,7 +453,7 @@ async function startSimulation() {
                         data: [],
                         borderColor: '#3498db80',
                         pointRadius: 0,
-                        borderWidth: 1,
+                        borderWidth: 0.5,
                         showLine: true,
                         tension: 0.1
                     }]
