@@ -336,7 +336,8 @@ async function startSimulation() {
             ...data,
             initAngle: initAngle * Math.PI / 180,
             dampingCoef: dampingCoef * 1e-5,
-            height: height
+            height: height,
+            latitude: latitude
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
         document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
@@ -493,7 +494,9 @@ function animateSimulation(realTimeRatio, stopTime) {
         // Расчет текущего состояния
         const angle = simulationData.initAngle * Math.exp(-simulationData.dampingCoef * simulatedTime) * 
                     Math.cos(Math.sqrt(simulationData.oscill_rate**2 - simulationData.dampingCoef**2) * simulatedTime);
-        const rotationAngle = simulationData.rotation_rate * simulatedTime;
+        
+        // На экваторе (широта 0°) rotationAngle должен быть 0
+        const rotationAngle = simulationData.latitude === 0 ? 0 : simulationData.rotation_rate * simulatedTime;
 
         update3DPendulum(angle, rotationAngle);
 

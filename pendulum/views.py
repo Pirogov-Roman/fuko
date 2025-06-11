@@ -39,7 +39,8 @@ def simulate(request):
             # Основные расчеты
             g = 9.81
             earth_rot = 7.2921159e-5
-            rotation_rate = earth_rot * math.sin(math.radians(latitude))
+            latitude = float(data.get('latitude', 0))
+            rotation_rate = earth_rot * math.sin(math.radians(latitude)) if latitude != 0 else 0
             period = 2 * math.pi * math.sqrt(height / g)
             oscill_rate = (2 * math.pi)/period
             
