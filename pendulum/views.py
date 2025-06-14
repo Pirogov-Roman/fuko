@@ -17,7 +17,7 @@ def index(request):
 def simulate(request):
     if request.method == 'POST':
         try:
-            # Проверяем наличие тела запроса
+            # проверяем наличие тела запроса
             if not request.body:
                 return JsonResponse({'success': False, 'error': 'Empty request body'}, status=400)
                 
@@ -26,7 +26,7 @@ def simulate(request):
             except json.JSONDecodeError as e:
                 return JsonResponse({'success': False, 'error': f'Invalid JSON: {str(e)}'}, status=400)
             
-            # Валидация с значениями по умолчанию
+            # валидация с значениями по умолчанию
             try:
                 latitude = float(data.get('latitude', 0))
                 height = float(data.get('height', 70))
@@ -36,7 +36,7 @@ def simulate(request):
             except (TypeError, ValueError) as e:
                 return JsonResponse({'success': False, 'error': f'Invalid parameter value: {str(e)}'}, status=400)
             
-            # Основные расчеты
+            # основные расчеты
             g = 9.81
             earth_rot = 7.2921159e-5
             latitude = float(data.get('latitude', 0))
@@ -46,12 +46,12 @@ def simulate(request):
             
             rotation_period = float('inf') if rotation_rate == 0 else (2 * math.pi) / (abs(rotation_rate) * 3600)
             
-            # Генерация точек траектории (независимо от времени симуляции)
+            # генерация точек траектории 
             full_trajectory_points = []
             if rotation_rate != 0:
-                # Рассчитываем траекторию для одного полного оборота
+                # рассчитываем траекторию для одного полного оборота
                 full_rotation_time = abs(2 * math.pi / rotation_rate)
-                num_points = 1000  # Фиксированное количество точек
+                num_points = 1000 
                 
                 for i in range(num_points + 1):
                     t = i * full_rotation_time / num_points
@@ -63,7 +63,7 @@ def simulate(request):
                     y = height * math.sin(angle) * math.sin(rotation_angle)
                     full_trajectory_points.append({'x': x, 'y': y})
             else:
-                # На экваторе - просто линейная траектория
+                # на экваторе - просто линейная траектория
                 x = height * math.sin(math.radians(init_angle))
                 full_trajectory_points.append({'x': x, 'y': 0})
                 full_trajectory_points.append({'x': -x, 'y': 0})
