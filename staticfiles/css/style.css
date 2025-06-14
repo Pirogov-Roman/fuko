@@ -68,7 +68,7 @@ body {
   display: none !important;
 }
 
-/* Графики */
+/* графики */
 .panel canvas {
     width: 100% !important;
     height: auto !important;
@@ -102,7 +102,7 @@ body {
     margin-bottom: 5px; 
 }
 
-/* Строка с графиками */
+/* строка с графиками */
 .charts-row {
     display: flex;
     gap: 20px;
@@ -219,7 +219,7 @@ body {
 
 #pendulum-3d {
     width: 100%;
-    height: calc(100% - 30px); /* Фиксированная высота */
+    height: calc(100% - 30px); 
     margin: 0 auto;
     background: #ffffff;
     border-radius: 8px;

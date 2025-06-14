@@ -1,4 +1,4 @@
-// Управление слайдером скорости
+// управление слайдером скорости
 const slider = document.getElementById('speed-slider');
 const display = document.getElementById('speed-display');
 slider.addEventListener('input', function() {
@@ -6,11 +6,11 @@ slider.addEventListener('input', function() {
 });
 display.textContent = slider.value + 'x';
 
-// Инициализация карты
+// инициализация карты
 const map = L.map('map').setView([0, 0], 2);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-// Обработчик клика по карте
+// обработчик клика по карте
 map.on('click', function(e) {
     document.getElementById('latitude').textContent = e.latlng.lat.toFixed(2);
     document.getElementById('longitude').textContent = e.latlng.lng.toFixed(2);
@@ -32,35 +32,35 @@ function init3DPendulum() {
     
     const container = document.getElementById('pendulum-3d');
     
-    // Очистка предыдущего содержимого
+    // очистка предыдущего содержимого
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
     
-    // Сцена
+    // сцена
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0xe0e0e0);
     
-    // Камера
+    // камера
     camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
     camera.position.set(0, 1.5, 7);
     camera.lookAt(0, 1.5, 0);
     
-    // Рендерер
+    // рендерер
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
     
-    // Контроллер для вращения сцены
+    // контроллер для вращения сцены
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.25;
     controls.minDistance = 3;
     controls.maxDistance = 10;
     
-    // Освещение
+    // освещение
     const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
     scene.add(ambientLight);
     
@@ -73,7 +73,7 @@ function init3DPendulum() {
     directionalLight.shadow.camera.far = 10;
     scene.add(directionalLight);
     
-    // Точка крепления маятника 
+    // точка крепления маятника 
     const attachmentGeometry = new THREE.SphereGeometry(0.15, 32, 32);
     const attachmentMaterial = new THREE.MeshStandardMaterial({ 
         color: 0x333333,
@@ -85,7 +85,7 @@ function init3DPendulum() {
     attachment.castShadow = true;
     scene.add(attachment);
     
-    // Пол с текстурой
+    // пол с текстурой
     const floorGeometry = new THREE.CircleGeometry(5, 64);
     const floorMaterial = new THREE.MeshStandardMaterial({ 
         color: 0xeeeeee,
@@ -99,7 +99,7 @@ function init3DPendulum() {
     floor.receiveShadow = true;
     scene.add(floor);
 
-    // Текстура для пола с радиальными линиями
+    // текстура для пола с радиальными линиями
     const canvas = document.createElement('canvas');
     canvas.width = 1024;
     canvas.height = 1024;
@@ -107,7 +107,7 @@ function init3DPendulum() {
     context.fillStyle = '#eeeeee';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Рисуем радиальные линии
+    // рисуем радиальные линии
     context.strokeStyle = 'rgba(100, 100, 100, 0.3)';
     context.lineWidth = 2;
     const center = canvas.width / 2;
@@ -124,7 +124,7 @@ function init3DPendulum() {
         context.stroke();
     }
 
-    // Концентрические круги
+    // концентрические круги
     for (let r = 0.2; r < 1; r += 0.2) {
         context.beginPath();
         context.arc(center, center, r * radius, 0, 2 * Math.PI);
@@ -185,7 +185,7 @@ function init3DPendulum() {
     createCompassLabel('SW', new THREE.Vector3(-3.2, 0, 3.2), -3*Math.PI/4);
     createCompassLabel('NW', new THREE.Vector3(-3.2, 0, -3.2), -Math.PI/4);
 
-    // Группа для маятника
+    // группа для маятника
     pendulumGroup = new THREE.Group();
     pendulumGroup.position.y = 3.2;
     scene.add(pendulumGroup);
@@ -210,7 +210,7 @@ function init3DPendulum() {
     
     is3DInitialized = true;
     
-    // Обработчик изменения размера
+    // обработчик изменения размера
     function onWindowResize() {
         const container = document.getElementById('pendulum-3d');
         camera.aspect = container.clientWidth / container.clientHeight;
@@ -245,12 +245,12 @@ function update3DPendulum(angle, rotationAngle) {
     string.geometry = new THREE.BufferGeometry().setFromPoints(points);
 }
 
-// Обработчик кнопки запуска
+// обработчик кнопки запуска
 document.getElementById('start-btn').addEventListener('click', function() {           
     startSimulation();
 });
 
-// Обработчик кнопки остановки
+// обработчик кнопки остановки
 document.getElementById('stop-btn').addEventListener('click', function() {
     if (animationId) {
         cancelAnimationFrame(animationId);
@@ -261,7 +261,7 @@ document.getElementById('stop-btn').addEventListener('click', function() {
     document.getElementById('stop-btn').style.display = 'none';
 });
 
-// Функция для получения CSRF токена
+// функция для получения CSRF токена
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -278,7 +278,7 @@ function getCookie(name) {
 }
 
 async function startSimulation() {
-    // Получаем параметры
+    // параметры от пользователя
     const latitude = parseFloat(document.getElementById('latitude').textContent);
     const height = parseFloat(document.getElementById('height').value);
     const dampingCoef = parseFloat(document.getElementById('damping_coef').value);
@@ -288,12 +288,12 @@ async function startSimulation() {
 
     init3DPendulum();
 
-    // Очистка предыдущей анимации
+    // очистка предыдущей анимации
     if (animationId) cancelAnimationFrame(animationId);
     if (currentChart) currentChart.destroy();
     if (currentChart2) currentChart2.destroy();
 
-    // Удаляем старый таймер
+    // удаляем старый таймер
     const oldTimer = document.querySelector('.simulation-timer');
     if (oldTimer) oldTimer.remove();
     document.getElementById('start-btn').style.display = 'none';
@@ -331,7 +331,7 @@ async function startSimulation() {
             throw new Error(data.error || 'Simulation failed');
         }
 
-        // Сохраняем данные симуляции
+        // сохраняем данные симуляции
         simulationData = {
             ...data,
             initAngle: initAngle * Math.PI / 180,
@@ -340,12 +340,12 @@ async function startSimulation() {
             latitude: latitude
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
-        document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
+        document.getElementById('rotation-value').textContent = data.rotation_period === null ? "∞" : data.rotation_period.toFixed(2);
         const maxX = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x)));
         const maxY = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y)));
         const chartRange = Math.max(maxX, maxY);
 
-        // Общие настройки для графиков
+        // общие настройки для графиков
         const commonOptions = {
             responsive: true,
             maintainAspectRatio: true,
@@ -384,7 +384,7 @@ async function startSimulation() {
                 }
             }
         };
-        // Создаем элемент для таймера
+        // создание элемента для таймера
         const realTimeChartWrapper = document.querySelector('.chart-wrapper:first-child');
         const timerElement = document.createElement('div');
         timerElement.className = 'simulation-timer';
@@ -408,7 +408,7 @@ async function startSimulation() {
         const canvasElement = realTimeChartWrapper.querySelector('canvas');
         canvasElement.insertAdjacentElement('afterend', timerElement);
 
-        // График полной траектории (красный)
+        // график полной траектории (красный)
         currentChart2 = new Chart(
             document.getElementById('chart2').getContext('2d'),
             {
@@ -442,7 +442,7 @@ async function startSimulation() {
             }
         );
 
-        // График реального времени (синий) - изначально пустой
+        // график реального времени (синий), изначально пустой
         currentChart = new Chart(
             document.getElementById('chart').getContext('2d'),
             {
@@ -462,7 +462,7 @@ async function startSimulation() {
             }
         );
 
-        // Запускаем анимацию
+        // запускаем анимацию
         animateSimulation(realTimeRatio, stopTime);
 
     } catch (error) {
@@ -471,7 +471,7 @@ async function startSimulation() {
         isSimulationRunning = false;
         document.getElementById('start-btn').style.display = 'inline-block';
         document.getElementById('stop-btn').style.display = 'none';
-        return;  // Прерываем выполнение при ошибке
+        return;  // прерываем выполнение при ошибке
     }
 }
 
@@ -488,7 +488,7 @@ function animateSimulation(realTimeRatio, stopTime) {
         const now = Date.now();
         const elapsed = (now - startTime) / 1000;
 
-        // Проверяем изменение коэффициента ускорения
+        // проверяем изменение коэффициента ускорения
         const newRealTimeRatio = parseFloat(document.getElementById('speed-slider').value);
         if (newRealTimeRatio !== lastRealTimeRatio) {
             accumulatedTime += elapsed * lastRealTimeRatio;
@@ -499,33 +499,33 @@ function animateSimulation(realTimeRatio, stopTime) {
 
         const simulatedTime = accumulatedTime + elapsed * realTimeRatio;
 
-        // Обновляем таймер
+        // обновляем таймер
         if (now - lastTimerUpdate > 100) {
             document.querySelector('.timer-value').textContent = simulatedTime.toFixed(1);
             lastTimerUpdate = now;
         }
 
-        // Расчет текущего состояния
+        // расчет текущего состояния
         const angle = simulationData.initAngle * Math.exp(-simulationData.dampingCoef * simulatedTime) * 
                     Math.cos(Math.sqrt(simulationData.oscill_rate**2 - simulationData.dampingCoef**2) * simulatedTime);
         
-        // На экваторе (широта 0°) rotationAngle должен быть 0
+        // на экваторе (широта 0°) rotationAngle должен быть 0
         const rotationAngle = simulationData.latitude === 0 ? 0 : simulationData.rotation_rate * simulatedTime;
 
         update3DPendulum(angle, rotationAngle);
 
-        // Обновление графиков
+        // обновление графиков
         if (now - lastChartUpdate > 50) {
             const x = simulationData.height * Math.sin(angle) * Math.cos(rotationAngle);
             const y = simulationData.height * Math.sin(angle) * Math.sin(rotationAngle);
     
-            // Добавляем точку без ограничения количества
+            // добавляем точку без ограничения количества
             currentChart.data.datasets[0].data.push({x, y});
             currentChart.update('none');
             lastChartUpdate = now;
         }
 
-        // Продолжаем анимацию
+        // продолжаем анимацию
         if (simulatedTime < stopTime) {
             animationId = requestAnimationFrame(animate);
         } else {
@@ -538,7 +538,7 @@ function animateSimulation(realTimeRatio, stopTime) {
     animate();
 }
 
-// График зависимости периода от широты
+// график зависимости периода от широты
 function calculateRotationPeriod(latitude) {
     const earthRot = 7.2921159e-5;
     const rotationRate = earthRot * Math.sin(latitude * Math.PI / 180);
@@ -565,7 +565,7 @@ const specialPoints = [
     { name: "Сидней", lat: -33.8688, period: calculateRotationPeriod(-33.8688) }
 ];
 
-// Инициализация графика зависимости периода от широты
+// инициализация графика зависимости периода от широты
 const ctx3 = document.getElementById('latitude-period-chart').getContext('2d');
 new Chart(ctx3, {
     type: 'line',
