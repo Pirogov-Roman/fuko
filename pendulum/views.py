@@ -44,30 +44,30 @@ def simulate(request):
             period = 2 * math.pi * math.sqrt(height / g)
             oscill_rate = (2 * math.pi)/period
             
-            rotation_period = float('inf') if rotation_rate == 0 else (2 * math.pi) / (abs(rotation_rate) * 3600)
+            rotation_period = None if rotation_rate == 0 else (2 * math.pi) / (abs(rotation_rate) * 3600)
             
             # генерация точек траектории 
             full_trajectory_points = []
-            if rotation_rate != 0:
-                # рассчитываем траекторию для одного полного оборота
+            if abs(latitude) < 1e-6:  # экватор
+                num_points = 1000
+                for i in range(num_points + 1):
+                    t = i * stoptime / num_points
+                    angle = math.radians(init_angle) * math.exp(-damping_coef * 1e-5 * t) * math.cos(
+                        math.sqrt(oscill_rate**2 - (damping_coef * 1e-5)**2) * t)
+                    x = height * math.sin(angle)
+                    full_trajectory_points.append({'x': x, 'y': 0})
+            else:
+                # обычный расчет для других широт
                 full_rotation_time = abs(2 * math.pi / rotation_rate)
-                num_points = 1000 
-                
+                num_points = 1000
                 for i in range(num_points + 1):
                     t = i * full_rotation_time / num_points
                     angle = math.radians(init_angle) * math.exp(-damping_coef * 1e-5 * t) * math.cos(
                         math.sqrt(oscill_rate**2 - (damping_coef * 1e-5)**2) * t)
-                    
                     rotation_angle = rotation_rate * t
                     x = height * math.sin(angle) * math.cos(rotation_angle)
                     y = height * math.sin(angle) * math.sin(rotation_angle)
                     full_trajectory_points.append({'x': x, 'y': y})
-            else:
-                # на экваторе - просто линейная траектория
-                x = height * math.sin(math.radians(init_angle))
-                full_trajectory_points.append({'x': x, 'y': 0})
-                full_trajectory_points.append({'x': -x, 'y': 0})
-                full_trajectory_points.append({'x': x, 'y': 0})
 
             return JsonResponse({
                 'success': True,

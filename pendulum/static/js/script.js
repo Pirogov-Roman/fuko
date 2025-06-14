@@ -340,7 +340,7 @@ async function startSimulation() {
             latitude: latitude
         };
         document.getElementById('period-value').textContent = data.period.toFixed(2);
-        document.getElementById('rotation-value').textContent = data.rotation_period.toFixed(2);
+        document.getElementById('rotation-value').textContent = data.rotation_period === null ? "∞" : data.rotation_period.toFixed(2);
         const maxX = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.x)));
         const maxY = Math.max(...data.full_trajectory_points.map(p => Math.abs(p.y)));
         const chartRange = Math.max(maxX, maxY);
